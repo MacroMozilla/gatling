@@ -3,10 +3,10 @@ import os
 import random
 import time
 
-from databasetool.redis_base import get_redis_master
+from gatling.databasetool.redis_base import get_redis_master
 from databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
-from utility.const import K_args
-from utility.exec_tools import run_python_script, get_pids_by_cmd, kill_process
+from gatling.utility.const import K_args
+from gatling.utility.exec_tools import run_python_script, get_pids_by_cmd, kill_process
 
 
 def heavy_cpu_task(a: float, b: float = 0.0) -> float:

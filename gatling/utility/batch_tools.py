@@ -1,17 +1,16 @@
 import os
-import time
 import concurrent.futures
-import random
 from functools import partial
 from typing import Any, Callable, Dict, List
 from tqdm import tqdm
 
+from utility.const import TypeR
 from utility.watch import watch_time, Watch
 
 # 定义常量
 K_args = "args"
 K_kwargs = "kwargs"
-TypeR = float  # 返回类型改为 float
+
 
 
 @watch_time

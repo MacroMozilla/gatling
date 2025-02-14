@@ -1,10 +1,10 @@
 import random
 import time
 
-from utility.batch_tools import batch_execute_forloop, batch_execute_process, batch_execute_thread
-from utility.batch_tools_gatling import batch_execute_gatling
-from utility.const import K_args
-from utility.watch import Watch
+from gatling.utility.batch_tools import batch_execute_forloop, batch_execute_process, batch_execute_thread
+from gatling.utility.batch_tools_gatling import batch_execute_gatling
+from gatling.utility.const import K_args
+from gatling.utility.watch import Watch
 
 from a_plot_tools import *
 
@@ -56,29 +56,31 @@ if __name__ == '__main__':
             cost = watch.see_timedelta()
             io_task_times[name].append(cost.total_seconds())
 
-    fig, axs = plt.subplots(2, 1, figsize=(10, 10))
+        fig, axs = plt.subplots(2, 1, figsize=(10, 10))
 
-    # CPU-bound task execution time (log scale)
-    axs[0].set_yscale("log")
-    for name, times in cpu_task_times.items():
-        axs[0].plot(task_numbers[:len(times)], times, marker='o', label=name)
-    axs[0].set_xlabel("Number of Tasks")
-    axs[0].set_ylabel("Execution Time (seconds)")
-    axs[0].set_title("CPU-bound Task Execution Time")
-    axs[0].legend()
-    axs[0].grid(True)
+        # CPU-bound task execution time (log scale)
+        axs[0].set_yscale("log")
+        for name, times in cpu_task_times.items():
+            axs[0].plot(task_numbers[:len(times)], times, marker='o', label=name)
+        axs[0].set_xlabel("Number of Tasks")
+        axs[0].set_ylabel("Execution Time (seconds)")
+        axs[0].set_title("CPU-bound Task Execution Time")
+        axs[0].legend()
+        axs[0].grid(True)
 
-    # IO-bound task execution time (log scale)
-    axs[1].set_yscale("log")
-    for name, times in io_task_times.items():
-        axs[1].plot(task_numbers[:len(times)], times, marker='o', label=name)
-    axs[1].set_xlabel("Number of Tasks")
-    axs[1].set_ylabel("Execution Time (seconds)")
-    axs[1].set_title("IO-bound Task Execution Time")
-    axs[1].legend()
-    axs[1].grid(True)
+        # IO-bound task execution time (log scale)
+        axs[1].set_yscale("log")
+        for name, times in io_task_times.items():
+            axs[1].plot(task_numbers[:len(times)], times, marker='o', label=name)
+        axs[1].set_xlabel("Number of Tasks")
+        axs[1].set_ylabel("Execution Time (seconds)")
+        axs[1].set_title("IO-bound Task Execution Time")
+        axs[1].legend()
+        axs[1].grid(True)
 
-    plt.tight_layout()
-    # plt_show()
-    plt.savefig("../x_figs/evaluation_speed_for_batch_tools.png")
-    plt.close()
+        plt.tight_layout()
+        # plt_show()
+        fpath_fig = "../x_figs/evaluation_speed_for_batch_tools.png"
+        plt.savefig(fpath_fig)
+        print(f"SAVE FIG {fpath_fig}")
+        plt.close()

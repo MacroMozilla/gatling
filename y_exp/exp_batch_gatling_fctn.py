@@ -1,8 +1,8 @@
 import random
 import time
 
-from utility.batch_tools_gatling import batch_execute_gatling
-from utility.const import K_args, TypeR
+from gatling.utility.batch_tools_gatling import batch_execute_gatling
+from gatling.utility.const import K_args
 
 
 def heavy_cpu_task(a: float, b: float = 0.0) -> float:

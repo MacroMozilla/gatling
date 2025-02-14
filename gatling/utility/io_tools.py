@@ -99,7 +99,7 @@ def delete_text(filename: str) -> bool:
     """
     try:
         os.remove(filename)
-        print(f"文件已删除: {filename}")
+        # print(f"文件已删除: {filename}")
         return True
     except FileNotFoundError:
         print(f"文件不存在: {filename}")

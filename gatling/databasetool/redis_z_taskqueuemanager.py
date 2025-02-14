@@ -1,9 +1,7 @@
 import json
 import datetime
-import os
 import traceback
 import time
-from concurrent.futures import ProcessPoolExecutor
 from typing import List
 
 import numpy as np
@@ -35,7 +33,7 @@ class ResultList(list):
     def delete(self):
         N = len(self.redisdctn)
         self.redisdctn.delete()
-        print(f"delete {ResultList} #results = {N}")
+        print(f"delete {self.redisdctn.__class__.__name__} {self.redisdctn.name} , #results = {N}")
 
 
 class RedisTaskQueueManager:
@@ -59,9 +57,9 @@ class RedisTaskQueueManager:
         self.redisdctn_error.delete()
         self.redisdctn_rpack.delete()
         print(f"reset {self.redisqueue_waiting.__class__.__name__} {self.redisqueue_waiting.name}")
-        print(f"reset {self.redisqueue_waiting.__class__.__name__} {self.redisdctn_executing.name}")
-        print(f"reset {self.redisqueue_waiting.__class__.__name__} {self.redisdctn_error.name}")
-        print(f"reset {self.redisqueue_waiting.__class__.__name__} {self.redisdctn_rpack.name}")
+        print(f"reset {self.redisdctn_executing.__class__.__name__} {self.redisdctn_executing.name}")
+        print(f"reset {self.redisdctn_error.__class__.__name__} {self.redisdctn_error.name}")
+        print(f"reset {self.redisdctn_rpack.__class__.__name__} {self.redisdctn_rpack.name}")
 
     def push_waiting(self, argskwargs_s):
         args_kwargs_uid_sent_s = []
@@ -139,7 +137,7 @@ class RedisTaskQueueManager:
                     for _ in trange(seconds, desc="Sleeping", unit="sec"):
                         time.sleep(1)
 
-    def check_done_block(self, check_interval=5):
+    def check_done_block(self, check_interval=5, get_pids_fctn=None):
         """
             使用单次调用 check_done 获取结果并处理
             """
@@ -160,7 +158,11 @@ class RedisTaskQueueManager:
             per_item_cost_seconds = round(per_item_cost.total_seconds(), 3) if per_item_cost != np.inf else np.inf
             processed_items_cost = round(processed_items_cost.total_seconds(), 3)
 
-            print(f'{self.fctn.__name__} cost {processed_items_cost}/{processed_items_num} = {per_item_cost_seconds} sec/item, remain {cur_remaining} items, estimate {remain_item_cost_est}')
+            pids_sent = "get_pids_fctn is undefined."
+            if get_pids_fctn is not None:
+                pids_sent = f"pids = {get_pids_fctn()}"
+
+            print(f"""{self.fctn.__name__} cost {processed_items_cost}/{processed_items_num} = {per_item_cost_seconds} sec/item, remain {cur_remaining} items, estimate {remain_item_cost_est}, {pids_sent}""")
 
             prev_remaining = cur_remaining
 
@@ -171,7 +173,6 @@ class RedisTaskQueueManager:
 
         print(f'{self.fctn.__name__} done!')
 
-    @watch_time
     def fetch_result(self):
         uid2rpack = self.redisdctn_rpack.dict()
         uids = sorted(list(uid2rpack.keys()))

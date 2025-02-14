@@ -1,11 +1,6 @@
-import argparse
 import inspect
 import os
-import random
-import time
 from typing import Callable, List, Any, Dict
-
-from Demos.mmapfile_demo import offset
 
 from databasetool.redis_base import get_redis_master
 from databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
@@ -93,7 +88,7 @@ def get_calling_filename(offset: int = 1) -> str:
 
 
 @watch_time
-def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]], redis_master: object = None, workers: object = None, check_interval=5, delete_redis_result=True) -> List[TypeJson]:
+def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]], redis_master: object = None, workers: object = None, check_interval=2, delete_redis_result=True) -> List[TypeJson]:
     if redis_master is None:
         redis_master = get_redis_master('127.0.0.1', 6379)
     if workers is None:
@@ -107,8 +102,8 @@ def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]
     fname_caller = get_calling_filename(offset=3)
     fpath_caller = os.path.realpath(fname_caller)
 
-    print(f"[fctn] {func.__name__}")
-    print(f"[fpath] {fpath_caller}")
+    # print(f"[fctn] {func.__name__}")
+    # print(f"[fpath] {fpath_caller}")
 
     sent_code_including_function = extract_code_including_function(func.__name__, fpath_caller)
     # print("##### make gatling script #####")
@@ -120,8 +115,7 @@ def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]
 import os
 import redis
 import argparse
-from a_databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
-from utility.exec_tools import run_python_script, get_pids_by_cmd, kill_process
+from databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
 
 
 redis_kwargs = {redis_master.connection_pool.connection_kwargs}
@@ -135,17 +129,17 @@ if __name__ == '__main__':
 
     fpath_caller_gatling = rename_fname(fpath_caller, lambda fname: fname.replace('.py', '.gatling.py'))
     save_text(sent_code_full_script, fpath_caller_gatling)
-    run_python_script(fpath_caller_gatling)
 
     for i in range(workers):
         if rtqm_for_task.get_len_waiting():
-            run_python_script(fpath_caller_gatling, block=False)
+            run_python_script(fpath_caller_gatling, block=False, show_window=False)
 
-    rtqm_for_task.check_done_block(check_interval)
+    get_pids_fctn = lambda: get_pids_by_cmd(fpath_caller_gatling)
+    rtqm_for_task.check_done_block(check_interval, get_pids_fctn=get_pids_fctn)
 
-    pids = get_pids_by_cmd(fpath_caller_gatling)
+    pids = get_pids_fctn()
     for pid in pids:
-        kill_process(pid)
+        kill_process(pid, print_log=False)
 
     delete_text(fpath_caller_gatling)
 
