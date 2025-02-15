@@ -112,10 +112,8 @@ def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]
     sent_code_full_script = f"""
 {sent_code_including_function}    
 
-import os
 import redis
-import argparse
-from databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
+from gatling.databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
 
 
 redis_kwargs = {redis_master.connection_pool.connection_kwargs}

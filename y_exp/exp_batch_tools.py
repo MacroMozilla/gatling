@@ -25,7 +25,7 @@ def heavy_io_task(a: float, b: float = 0.0) -> float:
 if __name__ == '__main__':
     pass
     # 定义任务数量
-    task_numbers = [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768][:]
+    task_numbers = [128, 256, 512, 1024, 2048, 4096, 8192, 16384][:]
     executors = {
         "forloop": batch_execute_forloop,
         "process": batch_execute_process,
