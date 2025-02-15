@@ -1,8 +1,8 @@
 import json
 from typing import Union
 
-from databasetool.redis_base import get_redis_master
-from utility.watch import watch_time
+from gatling.databasetool.redis_base import get_redis_master
+from gatling.utility.watch import watch_time
 
 
 class RedisSet():

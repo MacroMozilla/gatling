@@ -4,7 +4,7 @@ import random
 import time
 
 from gatling.databasetool.redis_base import get_redis_master
-from databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
+from gatling.databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
 from gatling.utility.const import K_args
 from gatling.utility.exec_tools import run_python_script, get_pids_by_cmd, kill_process
 

@@ -60,8 +60,9 @@ if __name__ == '__main__':
 
         # CPU-bound task execution time (log scale)
         axs[0].set_yscale("log")
+        axs[0].set_xscale("log")
         for name, times in cpu_task_times.items():
-            axs[0].plot(task_numbers[:len(times)], times, marker='o', label=name)
+            axs[0].plot(task_numbers[:len(times)], times, marker='o', label=name, alpha=0.5)
         axs[0].set_xlabel("Number of Tasks")
         axs[0].set_ylabel("Execution Time (seconds)")
         axs[0].set_title("CPU-bound Task Execution Time")
@@ -70,8 +71,9 @@ if __name__ == '__main__':
 
         # IO-bound task execution time (log scale)
         axs[1].set_yscale("log")
+        axs[1].set_xscale("log")
         for name, times in io_task_times.items():
-            axs[1].plot(task_numbers[:len(times)], times, marker='o', label=name)
+            axs[1].plot(task_numbers[:len(times)], times, marker='o', label=name, alpha=0.5)
         axs[1].set_xlabel("Number of Tasks")
         axs[1].set_ylabel("Execution Time (seconds)")
         axs[1].set_title("IO-bound Task Execution Time")

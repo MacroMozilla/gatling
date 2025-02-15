@@ -4,8 +4,8 @@ from functools import partial
 from typing import Any, Callable, Dict, List
 from tqdm import tqdm
 
-from utility.const import TypeR
-from utility.watch import watch_time, Watch
+from gatling.utility.const import TypeR
+from gatling.utility.watch import watch_time, Watch
 
 # 定义常量
 K_args = "args"

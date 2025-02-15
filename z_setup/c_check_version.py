@@ -1,11 +1,9 @@
-# version_checker.py
 import os
 import re
 import time
 import requests
 from packaging.version import Version
 
-from z_setup import a_const
 from z_setup.a_const import PACKAGE_NAME
 
 

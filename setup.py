@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
-from z_setup.a_const import DESCRIPTION
-from z_setup.b_check_version import *
-from z_setup.c_tools import read_text, rmdir, rmdir_startswith
+from z_setup.a_const import DESCRIPTION, PACKAGE_NAME
+from z_setup.c_check_version import *
+from z_setup.b_tools import read_text, rmdir, rmdir_startswith
 
-new_version = gen_next_version(get_remote_version(a_const.PACKAGE_NAME))
+
+new_version = gen_next_version(get_remote_version(PACKAGE_NAME))
 print(f"🔹 New package version: {new_version}")
 
 DESCRIPTION_LONG = read_text('README.md')
