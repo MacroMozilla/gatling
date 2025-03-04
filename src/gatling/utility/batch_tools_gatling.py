@@ -1,4 +1,5 @@
 import inspect
+import json
 import os
 from typing import Callable, List, Any, Dict
 
@@ -88,7 +89,7 @@ def get_calling_filename(offset: int = 1) -> str:
 
 
 @watch_time
-def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]], redis_master: object = None, workers: object = None, check_interval=2, delete_redis_result=True) -> List[TypeJson]:
+def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]], redis_master: object = None, workers: object = None, check_interval=5, reset_params=True, ignore_done=True, reset_results=True, clean_result=True) -> List[TypeJson]:
     if redis_master is None:
         redis_master = get_redis_master('127.0.0.1', 6379)
     if workers is None:
@@ -96,8 +97,24 @@ def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]
 
     rtqm_for_task = RedisTaskQueueManager(fctn=func, redis_master=redis_master)
 
-    rtqm_for_task.reset()
-    rtqm_for_task.push_waiting(args_kwargs_s)
+    if reset_params:
+        print("""########## reset params ##########""")
+        rtqm_for_task.reset_params()
+
+    if reset_results:
+        print("""########## reset results ##########""")
+        rtqm_for_task.reset_rpacks()
+
+    if ignore_done:
+        print("""########## ignore done ##########""")
+        done_args_kwargs_s = rtqm_for_task.fetch_rpacks_args_kwargs()
+        done_args_kwargs_sent_s = {json.dumps(done_args_kwargs, sort_keys=True) for done_args_kwargs in done_args_kwargs_s}
+        ignore_done_args_kwargs_s = [args_kwargs for args_kwargs in args_kwargs_s if json.dumps(args_kwargs, sort_keys=True) not in done_args_kwargs_sent_s]
+
+        rtqm_for_task.push_waiting(ignore_done_args_kwargs_s)
+    else:
+        print("""########## push all ##########""")
+        rtqm_for_task.push_waiting(args_kwargs_s)
 
     fname_caller = get_calling_filename(offset=3)
     fpath_caller = os.path.realpath(fname_caller)
@@ -141,8 +158,8 @@ if __name__ == '__main__':
 
     delete_text(fpath_caller_gatling)
 
-    res = rtqm_for_task.fetch_result()
+    res = rtqm_for_task.fetch_results()
 
-    if delete_redis_result:
+    if clean_result:
         res.delete()
     return res

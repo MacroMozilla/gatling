@@ -51,14 +51,16 @@ class RedisTaskQueueManager:
         self.redisdctn_error = RedisDctn(name=self.fctn_key_error, redis_master=self.redis_master)
         self.redisdctn_rpack = RedisDctn(name=self.fctn_key_result, redis_master=self.redis_master)
 
-    def reset(self):
+    def reset_params(self):
         self.redisqueue_waiting.delete()
         self.redisdctn_executing.delete()
         self.redisdctn_error.delete()
-        self.redisdctn_rpack.delete()
         print(f"reset {self.redisqueue_waiting.__class__.__name__} {self.redisqueue_waiting.name}")
         print(f"reset {self.redisdctn_executing.__class__.__name__} {self.redisdctn_executing.name}")
         print(f"reset {self.redisdctn_error.__class__.__name__} {self.redisdctn_error.name}")
+
+    def reset_rpacks(self):
+        self.redisdctn_rpack.delete()
         print(f"reset {self.redisdctn_rpack.__class__.__name__} {self.redisdctn_rpack.name}")
 
     def push_waiting(self, argskwargs_s):
@@ -173,13 +175,32 @@ class RedisTaskQueueManager:
 
         print(f'{self.fctn.__name__} done!')
 
-    def fetch_result(self):
+    def fetch_results(self):
         uid2rpack = self.redisdctn_rpack.dict()
         uids = sorted(list(uid2rpack.keys()))
         results = [json.loads(uid2rpack[uid]).get(K_result, None) for uid in uids]
         rlist = ResultList(results, self.redisdctn_rpack)
 
         return rlist
+
+    def fetch_rpacks_args_kwargs(self):
+        uid2rpack = self.redisdctn_rpack.dict()
+        uids = sorted(list(uid2rpack.keys()))
+        rpacks = [json.loads(uid2rpack[uid]) for uid in uids]
+
+        argskwargs_s = []
+        for rpack in rpacks:
+            args = rpack.get(K_args, [])
+            kwargs = rpack.get(K_kwargs, {})
+
+            argskwargs = {}
+            if len(args) > 0:
+                argskwargs[K_args] = args
+            if len(kwargs) > 0:
+                argskwargs[K_kwargs] = kwargs
+            argskwargs_s.append(argskwargs)
+
+        return argskwargs_s
 
     def restore_executing(self):
         argskwargs_sent_s = (self.redisdctn_executing.keys())

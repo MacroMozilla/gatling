@@ -17,7 +17,7 @@ def heavy_io_task(a: float, b: float = 0.0) -> float:
     time.sleep(0.1)
     return int(round(a + b))
 
-
+random.seed(42)
 task_num = 1000
 cpu_tasks = [{K_args: [round(random.uniform(1, 10), 4),
                        round(random.uniform(1, 10), 4)]
@@ -25,4 +25,4 @@ cpu_tasks = [{K_args: [round(random.uniform(1, 10), 4),
 
 res = batch_execute_gatling(
     func=heavy_cpu_task,
-    args_kwargs_s=cpu_tasks)
+    args_kwargs_s=cpu_tasks, reset_results=False, clean_result=False)

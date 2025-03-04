@@ -30,7 +30,7 @@ def batch_push_task():
     cpu_tasks = [{K_args: [round(random.uniform(1, 10), 4),
                            round(random.uniform(1, 10), 4)]
                   } for _ in range(task_num)]
-    rtqm_update_task.reset()
+    rtqm_update_task.reset_params()
     rtqm_update_task.push_waiting(cpu_tasks)
 
 
@@ -43,7 +43,7 @@ def check_done_task():
 
 
 def fetch_result_task():
-    return rtqm_update_task.fetch_result()
+    return rtqm_update_task.fetch_results()
 
 
 if __name__ == '__main__':
