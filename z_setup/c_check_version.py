@@ -4,7 +4,7 @@ import time
 import requests
 from packaging.version import Version
 
-from z_setup.a_const import PACKAGE_NAME
+from .a_const import PACKAGE_NAME
 
 
 def get_remote_version(package_name):
