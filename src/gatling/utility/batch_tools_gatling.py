@@ -126,6 +126,7 @@ def batch_execute_gatling(func: CallableJson, args_kwargs_s: List[Dict[str, Any]
     # print("##### make gatling script #####")
     # print(sent_code_including_function)
 
+    redis_kwargs = {k:v for k,v in redis_master.connection_pool.connection_kwargs if k not in ['retry'] }
     sent_code_full_script = f"""
 {sent_code_including_function}    
 
@@ -133,7 +134,7 @@ import redis
 from gatling.databasetool.redis_z_taskqueuemanager import RedisTaskQueueManager
 
 
-redis_kwargs = {redis_master.connection_pool.connection_kwargs}
+redis_kwargs = {redis_kwargs}
 redis_master = redis.Redis(**redis_kwargs)
 rtqm_for_task = RedisTaskQueueManager(fctn={func.__name__}, redis_master=redis_master)
 
