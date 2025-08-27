@@ -1,0 +1,2 @@
+# support multiply times execution of one file (add file uid,using function.__name__)
+# support exit kill all related gatling.py process

@@ -164,7 +164,12 @@ class RedisTaskQueueManager:
             if get_pids_fctn is not None:
                 pids_sent = f"pids = {get_pids_fctn()}"
 
-            print(f"""{self.fctn.__name__} cost {processed_items_cost}/{processed_items_num} = {per_item_cost_seconds} sec/item, remain {cur_remaining} items, estimate {remain_item_cost_est}, {pids_sent}""")
+            rate_sent = f"{processed_items_cost} sec / {processed_items_num} item = {per_item_cost_seconds} sec/item"
+            if per_item_cost_seconds <1.0:
+                rate_sent = f"{processed_items_num} item / {processed_items_cost} sec / = {round(1/per_item_cost_seconds,3)} item/sec"
+
+
+            print(f"""{self.fctn.__name__} cost {rate_sent}, remain {cur_remaining} items, estimate {remain_item_cost_est}, {pids_sent}""")
 
             prev_remaining = cur_remaining
 

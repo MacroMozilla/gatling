@@ -71,7 +71,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo [INFO] Waiting for PyPI version update...
-python z_setup/b_check_version.py block
+python z_setup/c_check_version.py block
 
 echo.
 echo [SUCCESS] Update confirmed on PyPI!
