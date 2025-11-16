@@ -56,8 +56,10 @@ class TestTaskFlowHTTP(unittest.TestCase):
         self.tfm.append_stagefctn(fetch_json_data, coroutine_worker=2)  # async HTTP fetch
         self.tfm.append_stagefctn(process_data, thread_worker=1)  # CPU-bound sync task
 
-        wrap_save_jsonl_result = lambda data: save_jsonl_result([data], self.output_file)
-        wrap_save_jsonl_result.__name__ = "save_jsonl_result"
+        def wrap_save_jsonl_result(data):
+            """Wrapper for saving a single data entry to the shared JSONL output file."""
+            return save_jsonl_result([data], self.output_file)
+
         self.tfm.append_stagefctn(wrap_save_jsonl_result)  # save stage
 
         # Add tasks to the waiting queue
@@ -87,7 +89,7 @@ class TestTaskFlowHTTP(unittest.TestCase):
             self.assertIn("title_len", entry)
             self.assertIn("status", entry)
 
-        print(f"\n✅ Successfully saved to {self.output_file}")
+        print(f"\n Successfully saved to {self.output_file}")
         print(f"Example entry: {lines[0]}")
 
 

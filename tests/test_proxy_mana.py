@@ -20,7 +20,7 @@ class TestProxyManager(unittest.TestCase):
             {'proxy': 'http://proxy1.example.com:8080'},
             {'proxy': 'http://proxy2.example.com:8080'}
         ]
-        save_json(proxyinfos, self.http_json_path)  # ✅ Use your own save_json()
+        save_json(proxyinfos, self.http_json_path)  # Use your own save_json()
 
         # Mock a preset object
         class Preset:
@@ -53,7 +53,7 @@ class TestProxyManager(unittest.TestCase):
             proxy = pm.rand_ts_proxy_for_aiohttp()
             self.assertIn(proxy, proxies, f"Returned proxy {proxy} not in initialization list")
 
-        print("\n✅ ProxyManager test passed")
+        print("\n ProxyManager test passed")
 
 
 if __name__ == '__main__':

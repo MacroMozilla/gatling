@@ -70,7 +70,7 @@ class TestWatchTime(unittest.TestCase):
         diff = abs(sum_parts - total_secs)
         self.assertLess(diff, 0.05, f"Timing difference too large: {diff}")
 
-        print("\n✅ Watch class methods behave as expected.")
+        print("\n Watch class methods behave as expected.")
 
 
 if __name__ == '__main__':

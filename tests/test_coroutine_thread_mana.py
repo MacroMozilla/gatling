@@ -36,7 +36,7 @@ class TestCoroutineThreadManager(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0.5)  # Allow tasks to run briefly
         manager.stop()
 
-        # ✅ If we reach this point, no exception was raised → success
+        # If we reach this point, no exception was raised → success
         self.assertTrue(True, "Async manager ran successfully")
 
     def test_sync_mode(self):

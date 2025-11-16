@@ -18,7 +18,7 @@ permissions:
   security-events: write
 
 jobs:
-  check_build_push:
+  run_unitests:
     runs-on: ubuntu-latest
 
     steps:
