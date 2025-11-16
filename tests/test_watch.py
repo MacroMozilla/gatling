@@ -31,7 +31,7 @@ class TestWatchTime(unittest.TestCase):
         self.assertGreaterEqual(end - start, 0.48)
 
     # ============================================================
-    # Test the Watch class step-by-step
+    #  Test the Watch class step-by-step
     # ============================================================
     def test_watch_class_methods(self):
         """Verify all Watch methods produce valid and consistent timing values."""
