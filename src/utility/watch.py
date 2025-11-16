@@ -1,7 +1,5 @@
 import functools
 import datetime
-import time
-
 
 class Watch:
     """A simple stopwatch class using the datetime library."""
