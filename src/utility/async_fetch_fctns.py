@@ -83,7 +83,7 @@ async def fwrap(
         timeout: float = 15.0,
         logfctn: Callable[[str], None] | None = None,
         session: aiohttp.ClientSession | None = None,
-        **kwargs,  # ✅ 接受并传递额外参数（method, data, rtype等）
+        **kwargs,  # Accept and pass extra parameters (method, data, rtype, etc.)
 ) -> Any:
     """
     Generic async wrapper for aiohttp-based request functions.
@@ -112,7 +112,7 @@ async def fwrap(
             headers=headers or {},
             timeout=timeout,
             logfctn=logfctn,
-            **kwargs,  # ✅ 传递下去
+            **kwargs,
         )
 
     connector = aiohttp.TCPConnector(limit=100, use_dns_cache=True)
@@ -126,7 +126,7 @@ async def fwrap(
             headers=headers or {},
             timeout=timeout,
             logfctn=logfctn,
-            **kwargs,  # ✅ 同样传递
+            **kwargs,
         )
         if logfctn:
             logfctn("[fwrap] Session automatically closed after use")
