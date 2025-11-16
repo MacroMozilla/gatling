@@ -52,12 +52,12 @@ class ProxyManager:
         print(f"initialized {len(self.proxy2info)} proxies")
 
     def inc_success(self, proxy):
-        if not proxy in self.proxy2info:
+        if proxy not in self.proxy2info:
             self.proxy2info[proxy] = {K_success: 0, K_failure: 0}
         self.proxy2info[proxy][K_success] += 1
 
     def inc_failure(self, proxy):
-        if not proxy in self.proxy2info:
+        if proxy not in self.proxy2info:
             self.proxy2info[proxy] = {K_success: 0, K_failure: 0}
         self.proxy2info[proxy][K_failure] += 1
 
