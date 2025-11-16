@@ -42,7 +42,7 @@ class CoroutineThreadManager:
         else:
             print(f"[Sync start] threads={thread_worker}")
 
-        # 异步线程目标
+        # Asynchronous thread target
         def thread_target_async():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
