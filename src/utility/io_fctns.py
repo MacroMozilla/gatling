@@ -3,8 +3,7 @@ import os
 import pickle
 import tomllib
 import traceback
-from typing import Any, List, Union, Iterator
-
+from typing import Any, List
 
 
 def save_jsonl(data: List[Any], filename: str, mode='w') -> None:
