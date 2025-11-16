@@ -346,7 +346,7 @@ class TaskQueueTracker:
             status = self.get_status()
             status_sent = status2sent(status)
 
-            sent = f"[{cost}] remain={remain} {speed:.1f} iter/sec {status_sent}"
+            sent = f"[{cost}] remain={remain} {speed:.1f} iter/sec {srate=:.2f} {status_sent}"
             logfctn(sent)
             time.sleep(interval)
 
