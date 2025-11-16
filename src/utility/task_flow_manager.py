@@ -24,7 +24,7 @@ class FakeQueue(Queue):
         """Increment count instead of storing items."""
         with self.mutex:
             self._count += 1
-            # 触发 not_empty 通知，让等待的线程知道“有任务”
+            # Trigger the not_empty notification to let waiting threads know that "a task is available."
             self.not_empty.notify()
 
     def get(self, block=True, timeout=None):
@@ -33,9 +33,9 @@ class FakeQueue(Queue):
             if self._count > 0:
                 self._count -= 1
             else:
-                # 模拟原生 Queue 的等待逻辑（简单版）
+                # Simulate the native Queue’s waiting logic (simplified version).
                 self.not_empty.wait(timeout=timeout)
-        return None  # 没有真实对象
+        return None  # No real object
 
     def qsize(self):
         return self._count
@@ -44,7 +44,7 @@ class FakeQueue(Queue):
         return self._count == 0
 
     def full(self):
-        return False  # 永远不满
+        return False  # Never full
 
     def __len__(self):
         return self._count

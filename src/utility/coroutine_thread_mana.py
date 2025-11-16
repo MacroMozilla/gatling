@@ -29,7 +29,7 @@ class CoroutineThreadManager:
         is_async = inspect.iscoroutinefunction(self.task_func)
         self.stop_event = threading.Event()
 
-        # ✅ 合法性检查
+        # Legality Check
         if is_async and coroutine_worker <= 0:
             coroutine_worker = 1
         if (is_async and coroutine_worker == 0) or (not is_async and coroutine_worker > 0):
@@ -73,7 +73,7 @@ class CoroutineThreadManager:
             finally:
                 loop.close()
 
-        # 同步线程目标
+        # Sync Thread Goals
         def thread_target_sync():
             while not self.stop_event.is_set():
                 try:
@@ -89,7 +89,7 @@ class CoroutineThreadManager:
             self.executor.submit(target)
 
     def stop(self, force=True):
-        """安全停止所有线程"""
+        """Safely stop all threads"""
         if not self.stop_event:
             return
         self.stop_event.set()

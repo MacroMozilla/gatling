@@ -7,22 +7,22 @@ from utility.io_fctns import read_json, save_json  # ← 使用你刚给的函�
 
 
 class TestProxyManager(unittest.TestCase):
-    """测试 ProxyManager 的初始化、保存与随机代理功能"""
+    """Test the initialization, saving, and random proxy functionality of ProxyManager"""
 
     def setUp(self):
-        # 创建临时目录
+        # Create a temporary directory
         self.tempdir = tempfile.TemporaryDirectory()
         self.dpath_base_asset = self.tempdir.name
 
-        # 创建一个模拟的 data.http.json 文件
+        # Create a mock data.http.json file
         self.http_json_path = os.path.join(self.dpath_base_asset, 'data.http.json')
         proxyinfos = [
             {'proxy': 'http://proxy1.example.com:8080'},
             {'proxy': 'http://proxy2.example.com:8080'}
         ]
-        save_json(proxyinfos, self.http_json_path)  # ✅ 使用你自己的 save_json()
+        save_json(proxyinfos, self.http_json_path)  # ✅ Use your own save_json()
 
-        # 模拟 preset 对象
+        # Mock a preset object
         class Preset:
             pass
 
@@ -30,30 +30,30 @@ class TestProxyManager(unittest.TestCase):
         self.preset.dpath_base_asset = self.dpath_base_asset
 
     def tearDown(self):
-        # 自动清理临时目录
+        # Automatically clean up the temporary directory
         self.tempdir.cleanup()
 
     def test_proxy_manager_workflow(self):
-        """测试 ProxyManager 的完整工作流程"""
-        # 读取 data.http.json（使用你的 read_json）
+        """Test the full workflow of ProxyManager"""
+        # Read data.http.json (use your own read_json)
         proxyinfos = read_json(self.http_json_path)
         proxies = [pxinfo['proxy'] for pxinfo in proxyinfos]
 
-        # 初始化 ProxyManager
+        # Initialize ProxyManager
         fpath_proxyinfo = os.path.join(self.preset.dpath_base_asset, 'proxyinfos.http.jsonl')
         pm = ProxyManager(fpath_proxyinfo)
         pm.initialize(proxies)
         pm.save()
 
-        # 验证文件保存成功
-        self.assertTrue(os.path.exists(fpath_proxyinfo), "proxyinfos.http.jsonl 文件未生成")
+        # Verify that the file was saved successfully
+        self.assertTrue(os.path.exists(fpath_proxyinfo), "proxyinfos.http.jsonl file not created")
 
-        # 验证随机代理输出合法
+        # Verify that random proxies are valid
         for _ in range(10):
             proxy = pm.rand_ts_proxy_for_aiohttp()
-            self.assertIn(proxy, proxies, f"返回的代理 {proxy} 不在初始化列表中")
+            self.assertIn(proxy, proxies, f"Returned proxy {proxy} not in initialization list")
 
-        print("\n✅ ProxyManager 测试通过")
+        print("\n✅ ProxyManager test passed")
 
 
 if __name__ == '__main__':
