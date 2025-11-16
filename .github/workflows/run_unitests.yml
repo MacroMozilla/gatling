@@ -1,0 +1,53 @@
+name: Run Unit Tests
+
+on:
+  push:
+    branches: [ main, master, origin ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+  pull_request:
+    branches: [ main, master, origin ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  run_unitests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # -------------------------
+      # 1. Checkout code
+      # -------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -------------------------
+      # 2. Ruff Lint
+      # -------------------------
+      - name: Ruff Lint
+        uses: chartboost/ruff-action@v1
+
+      # -------------------------
+      # 3. CodeQL Security Scan
+      # -------------------------
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # -------------------------
+      # 4. Run Unit Tests
+      # -------------------------
+      - name: Run Unit Tests
+        run: |
+          python -m unittest discover -s tests
