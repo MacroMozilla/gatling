@@ -1,0 +1,33 @@
+name: Check for Non-ASCII Characters
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-non-ascii:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for non-ASCII characters in src/ and tests/
+        run: |
+          echo "🔍 Scanning src/ and tests/ for non-ASCII characters..."
+
+          # Directories to check
+          TARGET_DIRS="src tests"
+
+          # Search for non-ASCII bytes in text files under those dirs
+          non_ascii_files=$(grep -rI --include='*.*' -P '[^\x00-\x7F]' $TARGET_DIRS 2>/dev/null || true)
+
+          if [ -n "$non_ascii_files" ]; then
+            echo "❌ Found non-ASCII characters in the following files:"
+            echo "$non_ascii_files"
+            echo ""
+            echo "Please remove or replace non-ASCII characters before committing."
+            exit 1
+          else
+            echo "✅ All files in src/ and tests/ contain only ASCII characters."
+          fi
