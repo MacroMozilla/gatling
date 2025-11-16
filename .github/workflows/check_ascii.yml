@@ -1,33 +1,39 @@
-name: Check Non-ASCII Code
+name: Check Non-English Text
 
 on:
   push:
   pull_request:
 
 jobs:
-  check-non-ascii:
+  check-non-english:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check for non-ASCII characters in src/ and tests/
+      - name: Check for non-English letters in src/ and tests/
         run: |
-          echo "🔍 Scanning src/ and tests/ for non-ASCII characters..."
+          echo "🔍 Scanning src/ and tests/ for non-English letters (allowing all symbols)..."
 
           # Directories to check
           TARGET_DIRS="src tests"
 
-          # Search for non-ASCII bytes in text files under those dirs
-          non_ascii_files=$(grep -rI --include='*.*' -P '[^\x00-\x7F]' $TARGET_DIRS 2>/dev/null || true)
+          # Regex explanation:
+          # \p{L} = any kind of letter (Unicode category)
+          # [^\u0000-\u007F] = exclude ASCII range
+          # So: find any "letter" outside English ASCII range (A-Z, a-z)
+          non_english_files=$(grep -rIn --include='*.*' -P '[^\x00-\x7F&&\p{L}]' $TARGET_DIRS 2>/dev/null || true)
 
-          if [ -n "$non_ascii_files" ]; then
-            echo "❌ Found non-ASCII characters in the following files:"
-            echo "$non_ascii_files"
+          # Alternate (better) version: explicitly match non-Latin letters
+          non_english_files=$(grep -rIn --include='*.*' -P '[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}\p{Arabic}\p{Cyrillic}]' $TARGET_DIRS 2>/dev/null || true)
+
+          if [ -n "$non_english_files" ]; then
+            echo "❌ Found non-English letters in the following files:"
+            echo "$non_english_files"
             echo ""
-            echo "Please remove or replace non-ASCII characters before committing."
+            echo "Please remove or replace non-English letters before committing."
             exit 1
           else
-            echo "✅ All files in src/ and tests/ contain only ASCII characters."
+            echo "✅ All files in src/ and tests/ contain only English letters (symbols are allowed)."
           fi
