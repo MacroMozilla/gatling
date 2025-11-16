@@ -1,4 +1,4 @@
-name: Check for Non-ASCII Characters
+name: Check Non-ASCII Code
 
 on:
   push:
