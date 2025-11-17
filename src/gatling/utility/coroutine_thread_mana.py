@@ -60,7 +60,7 @@ class CoroutineThreadManager:
                         import traceback
                         traceback.print_exc()
                     await asyncio.sleep(0.05)
-                raise asyncio.CancelledError()
+                loop.close()
 
             async def main():
                 tasks = [
@@ -71,6 +71,8 @@ class CoroutineThreadManager:
 
             try:
                 loop.run_until_complete(main())
+            except asyncio.CancelledError:
+                pass
             finally:
                 loop.close()
 

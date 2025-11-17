@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# PyPI 真实包名（pip install 用的名字）
+name = "gatling"
+
+# 每次发布必须手动改这个
+version = "0.2.0"
+
+description = "A small async/sync task flow management utility library."
+readme = "README.md"
+requires-python = ">=3.11"
+
+authors = [
+  { name = "Harry", email = "honyzeng7@gmail.com" }
+]
+
+license = { text = "MIT" }
+
+# 如果你暂时没依赖，可以保持空列表
+dependencies = [
+]
+
+[project.urls]
+Homepage = "https://github.com/MacroMozilla/gatling"
+Repository = "https://github.com/MacroMozilla/gatling"
+
+[tool.setuptools]
+# 告诉 setuptools：源码在 src/ 目录
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
