@@ -170,6 +170,7 @@ class TaskQueueTracker:
         self.wait_queue: Queue = wait_queue
         self.done_queue: Queue = done_queue
         self.retry_on_error = retry_on_error
+        self.SENTINEL = object()
 
     def append_stagefctn(self, fctn: Callable, name: Optional[str] = None, thread_worker: int = None, coroutine_worker: int = None):
 
@@ -210,10 +211,12 @@ class TaskQueueTracker:
             def sync_wrapper():
                 # Take input arguments from the stage's waiting queue
                 args_kwargs = stage.q_wait_info.get()
-
-                stage.fq_work_info.put(args_kwargs)
                 stage.q_wait_info.task_done()
 
+                if args_kwargs is self.SENTINEL:
+                    return
+
+                stage.fq_work_info.put(args_kwargs)
                 try:
                     # Execute the stage function
                     result = stage.fctn(args_kwargs)
@@ -226,6 +229,7 @@ class TaskQueueTracker:
                 finally:
                     # Mark this work item as finished
                     stage.fq_work_info.get()
+                    # stage.fq_work_info.task_done()
 
             sync_wrapper.__name__ = stage.name
             return sync_wrapper
@@ -240,9 +244,11 @@ class TaskQueueTracker:
                 # Take input arguments from the stage's waiting queue
                 loop = asyncio.get_event_loop()
                 args_kwargs = await loop.run_in_executor(None, stage.q_wait_info.get)
-
-                stage.fq_work_info.put(args_kwargs)
                 stage.q_wait_info.task_done()
+
+                if args_kwargs is self.SENTINEL:
+                    return
+                stage.fq_work_info.put(args_kwargs)
 
                 try:
                     # Await the stage coroutine
@@ -254,8 +260,8 @@ class TaskQueueTracker:
                     print(traceback.format_exc())
                     stage.q_errr_info.put({"args_kwargs": args_kwargs, "error": e})
                 finally:
-                    # Mark this work item as finished
-                    args_kwargs = await loop.run_in_executor(None, stage.fq_work_info.get)
+                    await loop.run_in_executor(None, stage.fq_work_info.get)
+                    # stage.fq_work_info.task_done()
 
             async_wrapper.__name__ = stage.name
             return async_wrapper
@@ -370,6 +376,10 @@ class TaskFlowManager:
             tcm.start(thread_worker=stage.thread_worker, coroutine_worker=stage.coroutine_worker)
 
     def stop(self):
+        for stage in self.tqt.stages:
+            for _ in range(stage.thread_worker):
+                stage.q_wait_info.put(self.tqt.SENTINEL)
+
         for tcm, stage in zip(self.tcms, self.tqt.stages):
             tcm.stop()
 
