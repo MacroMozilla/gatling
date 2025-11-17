@@ -32,7 +32,7 @@ jobs:
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          delete_workflow_pattern: "Check Non-English Text"   # 👈 必须精确匹配 name
+          delete_workflow_pattern: "Run Unit Tests"
           keep_minimum_runs: 0
           delete_run_by_conclusion_pattern: "success,skipped,failed"
 
