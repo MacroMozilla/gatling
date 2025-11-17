@@ -1,4 +1,4 @@
-name: Check Non-English Text
+name: Check Non-English
 
 on:
   push:

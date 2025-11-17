@@ -1,4 +1,4 @@
-name: Cleanup All Workflow Runs
+name: Cleanup Runs
 
 on:
   # Manually triggered via the "Run workflow" button
