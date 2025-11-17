@@ -3,7 +3,8 @@ import threading
 import inspect
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Optional
-
+import time
+import traceback
 
 class CoroutineThreadManager:
     def __init__(self, task_func: Callable, args: tuple = (), kwargs: Optional[dict] = None):
@@ -53,7 +54,7 @@ class CoroutineThreadManager:
                         await self.task_func(*self.args, **self.kwargs)
                     except Exception as e:
                         print(f"async worker-{worker_id} exception:", e)
-                        import traceback
+
                         traceback.print_exc()
                     await asyncio.sleep(0.05)
 
@@ -68,11 +69,11 @@ class CoroutineThreadManager:
             except Exception as e:
                 print("loop exception:", e)
             finally:
-                loop.close()  # ✅ 只在这里关闭一次
+                loop.close()
 
         # Sync Thread Target
         def thread_target_sync():
-            import time
+
             while not self.stop_event.is_set():
                 try:
                     self.task_func(*self.args, **self.kwargs)
@@ -98,15 +99,16 @@ class CoroutineThreadManager:
 
 
 if __name__ == "__main__":
-    import time
 
     async def async_worker_task(name, delay=0.5):
         print(f"async task {name} running")
         await asyncio.sleep(delay)
 
+
     def sync_worker_task(name, delay=0.5):
         print(f"sync task {name} running")
         time.sleep(delay)
+
 
     print("=== test async ===")
     manager = CoroutineThreadManager(async_worker_task, args=("A",), kwargs={"delay": 0.3})
