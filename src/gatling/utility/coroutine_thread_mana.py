@@ -50,40 +50,34 @@ class CoroutineThreadManager:
             async def worker_loop(worker_id: int):
                 while not self.stop_event.is_set():
                     try:
-                        await asyncio.wait_for(
-                            self.task_func(*self.args, **self.kwargs), timeout=None
-                        )
-                    except asyncio.TimeoutError:
-                        pass
+                        await self.task_func(*self.args, **self.kwargs)
                     except Exception as e:
                         print(f"async worker-{worker_id} exception:", e)
                         import traceback
                         traceback.print_exc()
                     await asyncio.sleep(0.05)
-                loop.close()
 
             async def main():
-                tasks = [
-                    asyncio.create_task(worker_loop(i))
-                    for i in range(coroutine_worker)
-                ]
-                await asyncio.gather(*tasks)
+                tasks = [asyncio.create_task(worker_loop(i)) for i in range(coroutine_worker)]
+                await asyncio.gather(*tasks, return_exceptions=True)
 
             try:
                 loop.run_until_complete(main())
             except asyncio.CancelledError:
                 pass
+            except Exception as e:
+                print("loop exception:", e)
             finally:
-                loop.close()
+                loop.close()  # ✅ 只在这里关闭一次
 
-        # Sync Thread Goals
+        # Sync Thread Target
         def thread_target_sync():
+            import time
             while not self.stop_event.is_set():
                 try:
                     self.task_func(*self.args, **self.kwargs)
                 except Exception as e:
                     print("sync task exception:", e)
-                import time
                 time.sleep(0.05)
 
         self.executor = ThreadPoolExecutor(max_workers=thread_worker)
@@ -104,20 +98,15 @@ class CoroutineThreadManager:
 
 
 if __name__ == "__main__":
-    pass
     import time
-
 
     async def async_worker_task(name, delay=0.5):
         print(f"async task {name} running")
         await asyncio.sleep(delay)
 
-
     def sync_worker_task(name, delay=0.5):
         print(f"sync task {name} running")
-        import time
         time.sleep(delay)
-
 
     print("=== test async ===")
     manager = CoroutineThreadManager(async_worker_task, args=("A",), kwargs={"delay": 0.3})
@@ -134,6 +123,6 @@ if __name__ == "__main__":
     print("=== test (should raise error) ===")
     try:
         manager = CoroutineThreadManager(sync_worker_task)
-        manager.start(thread_worker=2, coroutine_worker=2)  # invalid combination
+        manager.start(thread_worker=2, coroutine_worker=2)
     except Exception as e:
         print("Error:", e)
