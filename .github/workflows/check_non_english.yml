@@ -10,23 +10,9 @@ permissions:
   security-events: write
 
 jobs:
-  cleanup:
-    name: Cleanup previous runs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait a bit for previous runs to finalize
-        run: sleep 10
-      - name: Delete previous workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          delete_workflow_pattern: "Check Non-English Text"   # 👈 必须精确匹配 name
-          keep_minimum_runs: 0
-          delete_run_by_conclusion_pattern: "success,skipped,failed"
 
   check-non-english:
     runs-on: ubuntu-latest
-    needs: [ cleanup ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
