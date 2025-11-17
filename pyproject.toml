@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gatling"
 
-version = "0.2.1"
+version = "0.2.2"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 
@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 
 authors = [
-  { name = "Harry", email = "honyzeng7@gmail.com" }
+    { name = "Harry", email = "honyzeng7@gmail.com" }
 ]
 
 license = { text = "MIT" }
@@ -25,8 +25,5 @@ dependencies = [
 Homepage = "https://github.com/MacroMozilla/gatling"
 Repository = "https://github.com/MacroMozilla/gatling"
 
-[tool.setuptools]
-package-dir = {"" = "gatling"}
-
 [tool.setuptools.packages.find]
-where = ["gatling"]
+where = ["."]
