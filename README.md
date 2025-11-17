@@ -35,7 +35,7 @@ Provides unified async/sync HTTP request helpers supporting `GET`, `POST`, `PUT`
 ### Example
 
 ```python
-from gatling.utility.http_client import sync_fetch_http, async_fetch_http, fwrap
+from gatling.utility.http_fetch_fctns import sync_fetch_http, async_fetch_http, fwrap
 import asyncio, aiohttp
 
 # --- Synchronous request ---
@@ -117,7 +117,7 @@ Convenient helpers for reading and writing JSON, JSONL, Pickle, TOML, text, and 
 ### Example
 
 ```python
-from gatling.utility.file_utils import *
+from gatling.utility.io_fctns import *
 
 save_json({"a": 1}, "data.json")
 print(read_json("data.json"))
@@ -151,7 +151,7 @@ Each stage can be synchronous or asynchronous.
 ### Example
 
 ```python
-from gatling.utility.taskflow_manager import TaskFlowManager
+from gatling.utility.task_flow_manager import TaskFlowManager
 from queue import Queue
 import asyncio, time
 

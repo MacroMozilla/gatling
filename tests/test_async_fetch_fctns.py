@@ -1,6 +1,6 @@
 import unittest
 import json
-from gatling.utility.async_fetch_fctns import sync_fetch_http
+from gatling.utility.http_fetch_fctns import sync_fetch_http
 
 
 def log_response(name, url, method, rtype, status, size, result):
