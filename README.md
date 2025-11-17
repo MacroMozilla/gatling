@@ -1,4 +1,3 @@
----
 
 # 🧩 Gatling Utility Library
 
