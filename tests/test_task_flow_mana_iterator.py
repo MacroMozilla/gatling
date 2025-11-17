@@ -86,7 +86,7 @@ class TestTaskFlowIterator(unittest.TestCase):
     def test_iterator_to_jsonl_flow(self):
         """Verify full iterator → processing → save pipeline executes successfully."""
         self.tfm.start()
-        self.tfm.await_print(timeout=2)
+        self.tfm.await_print(interval=1)
         self.tfm.stop()
 
         output_log = self._buffer.getvalue()
