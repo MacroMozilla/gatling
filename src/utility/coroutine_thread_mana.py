@@ -60,6 +60,7 @@ class CoroutineThreadManager:
                         import traceback
                         traceback.print_exc()
                     await asyncio.sleep(0.05)
+                raise asyncio.CancelledError()
 
             async def main():
                 tasks = [
