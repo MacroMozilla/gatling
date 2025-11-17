@@ -1,21 +1,32 @@
-name: Delete All Workflow Runs
+name: Cleanup All Workflow Runs
 
 on:
+  # 手动点按钮触发
   workflow_dispatch:
-
-permissions:
-  actions: write
-  contents: read
+  # 如果想要自动定期清理，加个定时任务（示例：每天 03:00 UTC）
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
     steps:
-      - name: Delete all workflow runs
+      - name: Delete ALL workflow runs in this repo
         uses: Mattraks/delete-workflow-runs@v2
         with:
+          # 用你刚才建的 PAT，也可以换成别的名字
           token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
-          keep_minimum_runs: 0
-          delete_run_by_conclusion_pattern: "success,skipped,failed,cancelled,completed,timed_out,stale"
-          delete_run_by_branch: "*"       # ✅ 所有分支
-          dry_run: false                  # 确保真的删除
+          repository: ${{ github.repository }}
+
+          # 👇 关键两行：不保留历史、也不限制天数 = 全删
+          retain_days: 0           # 默认是 30 天，不改的话 30 天内的 run 永远删不掉
+          keep_minimum_runs: 0     # 不保留任何 run
+
+          # 👇 下面几个设置成 ALL，表示不做过滤，所有 workflow、所有状态都删
+          delete_workflow_pattern: ""               # 为空或不写 = 所有 workflow
+          delete_workflow_by_state_pattern: "ALL"   # active / disabled 都算
+          delete_run_by_conclusion_pattern: "ALL"   # success / failure / skipped 等都删
+
+          dry_run: false          # 为 true 时只打印不删除，记得关掉
