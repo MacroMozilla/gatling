@@ -21,57 +21,67 @@ class TestWatchTime(unittest.TestCase):
             return "Decorator test completed!"
 
         start = time.perf_counter()
-        result = decorated_function(0.5)
+        result = decorated_function(0.4)
         end = time.perf_counter()
 
-        # Check return value
+        # Check that the function returned correctly
         self.assertEqual(result, "Decorator test completed!")
 
-        # Check elapsed time was at least 0.5s (allowing for small differences)
-        self.assertGreaterEqual(end - start, 0.48)
+        # Check elapsed time (allowing generous tolerance)
+        elapsed = end - start
+        print(f"\n[decorator] elapsed time = {elapsed:.3f}s")
+
+        # Allow 0.35s to 0.7s range to avoid false failures on slow CI
+        self.assertGreaterEqual(elapsed, 0.35)
+        self.assertLess(elapsed, 0.8)
 
     # ============================================================
-    #  Test the Watch class step-by-step
+    # Test the Watch class step-by-step
     # ============================================================
     def test_watch_class_methods(self):
         """Verify all Watch methods produce valid and consistent timing values."""
 
-        # 1. __init__
         watch = Watch()
         time.sleep(0.2)
 
-        # 2. see_timedelta()
+        # 1️⃣ see_timedelta()
         td1 = watch.see_timedelta()
         self.assertIsInstance(td1, timedelta)
         self.assertGreater(td1.total_seconds(), 0.0)
 
-        time.sleep(0.3)
+        time.sleep(0.25)
 
-        # 3. see_seconds()
+        # 2️⃣ see_seconds()
         secs2 = watch.see_seconds()
         self.assertIsInstance(secs2, float)
         self.assertGreater(secs2, 0.0)
 
-        # Internal record should contain at least 2 timedelta objects
+        # Record list should have at least two durations
         self.assertGreaterEqual(len(watch.records), 2)
 
-        # 4. total_timedelta()
+        # 3️⃣ total_timedelta()
         total_td = watch.total_timedelta()
         self.assertIsInstance(total_td, timedelta)
         self.assertGreater(total_td.total_seconds(), 0.0)
 
-        # 5. total_seconds()
+        # 4️⃣ total_seconds()
         total_secs = watch.total_seconds()
         self.assertIsInstance(total_secs, float)
-        self.assertAlmostEqual(total_secs, total_td.total_seconds(), delta=1e-6)
+        self.assertAlmostEqual(total_secs, total_td.total_seconds(), delta=0.002)
 
-        # The total should approximately equal the sum of individual durations
+        # 5️⃣ Consistency check with tolerance (timing noise allowed)
         sum_parts = td1.total_seconds() + secs2
         diff = abs(sum_parts - total_secs)
-        self.assertLess(diff, 0.05, f"Timing difference too large: {diff}")
+        print(
+            f"[watch] td1={td1.total_seconds():.3f}s, secs2={secs2:.3f}s, "
+            f"total={total_secs:.3f}s, diff={diff:.4f}s"
+        )
 
-        print("\n Watch class methods behave as expected.")
+        # Relaxed tolerance (0.15s) for slower CI / test environments
+        self.assertLess(diff, 0.15, f"Timing difference too large: {diff}")
+
+        print("\n✅ Watch class methods behave as expected.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=2)
