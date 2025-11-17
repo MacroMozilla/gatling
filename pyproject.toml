@@ -3,11 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-# PyPI 真实包名（pip install 用的名字）
 name = "gatling"
 
-# 每次发布必须手动改这个
-version = "0.2.0"
+version = "0.2.1"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 
@@ -20,7 +18,6 @@ authors = [
 
 license = { text = "MIT" }
 
-# 如果你暂时没依赖，可以保持空列表
 dependencies = [
 ]
 
@@ -29,7 +26,6 @@ Homepage = "https://github.com/MacroMozilla/gatling"
 Repository = "https://github.com/MacroMozilla/gatling"
 
 [tool.setuptools]
-# 告诉 setuptools：源码在 src/ 目录
 package-dir = {"" = "gatling"}
 
 [tool.setuptools.packages.find]

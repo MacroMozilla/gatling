@@ -2,7 +2,18 @@ name: Check Non-English
 
 on:
   push:
+  paths:
+    - '.github/**'
+    - 'src/**'
+    - 'tests/**'
+    - 'pyproject.toml'
+    - 'requirements.txt'
   pull_request:
+    - '.github/**'
+    - 'src/**'
+    - 'tests/**'
+    - 'pyproject.toml'
+    - 'requirements.txt'
 
 permissions:
   actions: write
@@ -51,10 +62,10 @@ jobs:
       - name: Check for non-English letters in src/ and tests/
         run: |
           echo "🔍 Scanning src/ and tests/ for non-English letters (allowing all symbols)..."
-
+          
           # Directories to check
-          TARGET_DIRS="src tests"
-
+          TARGET_DIRS="src tests .github pyproject.toml"
+          
           # Regex explanation:
           # \p{L} = any kind of letter (Unicode category)
           # [^\u0000-\u007F] = exclude ASCII range
