@@ -1,7 +1,7 @@
 name: Delete All Workflow Runs
 
 on:
-  workflow_dispatch:  # trigger manuually
+  workflow_dispatch:  # 手动触发
 
 permissions:
   actions: write
@@ -14,6 +14,6 @@ jobs:
       - name: Delete all workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          keep_minimum_runs: 0   # delete all
+          token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}  # ✅ 名字对应上
+          keep_minimum_runs: 0
           delete_run_by_conclusion_pattern: "success,skipped,failed,cancelled"
