@@ -2,7 +2,7 @@ name: Publish To PYPI
 
 on:
   push:
-    branches: [ main, master, origin ]
+    branches: [ master ]
     paths:
       - '.github/**'
       - 'src/**'
@@ -10,7 +10,7 @@ on:
       - 'pyproject.toml'
       - 'requirements.txt'
   pull_request:
-    branches: [ main, master, origin ]
+    branches: [ master ]
     paths:
       - '.github/**'
       - 'src/**'
@@ -58,7 +58,7 @@ jobs:
 
   unittests:
     runs-on: ubuntu-latest
-    needs: [cleanup]
+    needs: [ cleanup ]
     steps:
       # -------------------------
       # 1. Checkout code

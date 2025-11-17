@@ -2,18 +2,20 @@ name: Check Non English
 
 on:
   push:
-  paths:
-    - '.github/**'
-    - 'src/**'
-    - 'tests/**'
-    - 'pyproject.toml'
-    - 'requirements.txt'
+    paths:
+      - '.github/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+
   pull_request:
-    - '.github/**'
-    - 'src/**'
-    - 'tests/**'
-    - 'pyproject.toml'
-    - 'requirements.txt'
+    paths:
+      - '.github/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
 
 permissions:
   actions: write
