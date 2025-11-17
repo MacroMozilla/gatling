@@ -197,82 +197,95 @@ class TaskQueueTracker:
     def register_stagefctns(self) -> list[Callable]:
         """
         Create and return a list of wrapper functions for all stages.
-        Each wrapper is bound to its own Stage instance.
-        These wrappers can be directly passed to AsyncThreadManager.
+        Supports sync/async/generator/async-generator stage functions.
         """
+
         wrappers = []
 
-        # ---- Sync stage wrapper factory ----
+        # ---- Sync normal function ----
         def make_sync_wrapper(stage: Stage):
-            """
-            Create a synchronous wrapper function bound to the given stage.
-            """
-
             def sync_wrapper():
-                # Take input arguments from the stage's waiting queue
                 args_kwargs = stage.q_wait_info.get()
-                # stage.q_wait_info.task_done()
-
                 if args_kwargs is self.SENTINEL:
                     return
-
                 stage.fq_work_info.put(args_kwargs)
                 try:
-                    # Execute the stage function
                     result = stage.fctn(args_kwargs)
-                    # Push the result to the next (done) queue
                     stage.q_done_info.put(result)
                 except Exception as e:
-                    # On failure, push to the error queue
                     print(traceback.format_exc())
                     stage.q_errr_info.put({"args_kwargs": args_kwargs, "error": e})
                 finally:
-                    # Mark this work item as finished
                     stage.fq_work_info.get()
-                    # stage.fq_work_info.task_done()
 
-            sync_wrapper.__name__ = stage.name
             return sync_wrapper
 
-        # ---- Async stage wrapper factory ----
+        # ---- Async normal coroutine ----
         def make_async_wrapper(stage: Stage):
-            """
-            Create an asynchronous wrapper function bound to the given stage.
-            """
-
             async def async_wrapper():
-                # Take input arguments from the stage's waiting queue
                 loop = asyncio.get_event_loop()
                 args_kwargs = await loop.run_in_executor(None, stage.q_wait_info.get)
-                # stage.q_wait_info.task_done()
-
                 if args_kwargs is self.SENTINEL:
                     return
                 stage.fq_work_info.put(args_kwargs)
-
                 try:
-                    # Await the stage coroutine
                     result = await stage.fctn(args_kwargs)
-                    # Push the result to the next (done) queue
                     stage.q_done_info.put(result)
                 except Exception as e:
-                    # On failure, push to the error queue
                     print(traceback.format_exc())
                     stage.q_errr_info.put({"args_kwargs": args_kwargs, "error": e})
                 finally:
                     await loop.run_in_executor(None, stage.fq_work_info.get)
-                    # stage.fq_work_info.task_done()
 
-            async_wrapper.__name__ = stage.name
             return async_wrapper
+
+        # ---- Sync generator (iterator) ----
+        def make_gen_wrapper(stage: Stage):
+            def gen_wrapper():
+                args_kwargs = stage.q_wait_info.get()
+                if args_kwargs is self.SENTINEL:
+                    return
+                stage.fq_work_info.put(args_kwargs)
+                try:
+                    for val in stage.fctn(args_kwargs):
+                        stage.q_done_info.put(val)
+                except Exception as e:
+                    print(traceback.format_exc())
+                    stage.q_errr_info.put({"args_kwargs": args_kwargs, "error": e})
+                finally:
+                    stage.fq_work_info.get()
+
+            return gen_wrapper
+
+        # ---- Async generator ----
+        def make_asyncgen_wrapper(stage: Stage):
+            async def asyncgen_wrapper():
+                loop = asyncio.get_event_loop()
+                args_kwargs = await loop.run_in_executor(None, stage.q_wait_info.get)
+                if args_kwargs is self.SENTINEL:
+                    return
+                stage.fq_work_info.put(args_kwargs)
+                try:
+                    agen = stage.fctn(args_kwargs)
+                    async for val in agen:
+                        stage.q_done_info.put(val)
+                except Exception as e:
+                    print(traceback.format_exc())
+                    stage.q_errr_info.put({"args_kwargs": args_kwargs, "error": e})
+                finally:
+                    await loop.run_in_executor(None, stage.fq_work_info.get)
+
+            return asyncgen_wrapper
 
         # ---- Build all wrappers ----
         for stage in self.stages:
-            if inspect.iscoroutinefunction(stage.fctn):
-                # Async stage → async wrapper
+            if inspect.isasyncgenfunction(stage.fctn):
+                wrappers.append(make_asyncgen_wrapper(stage))
+            elif inspect.isgeneratorfunction(stage.fctn):
+                wrappers.append(make_gen_wrapper(stage))
+            elif inspect.iscoroutinefunction(stage.fctn):
                 wrappers.append(make_async_wrapper(stage))
             else:
-                # Sync stage → sync wrapper
                 wrappers.append(make_sync_wrapper(stage))
 
         return wrappers
@@ -391,38 +404,70 @@ if __name__ == '__main__':
     pass
 
 
-    def sync_square(x):
-        # print(f"[sync_square] computing {x}^2 ...")
-        time.sleep(0.2)
-        return x * x
+    # ---------- Example stage functions ----------
+
+    def iterator_stage(x):
+        """Generator stage: yields 3 transformed values per input item."""
+        for i in range(3):
+            val = f"{x}-gen-{i}"
+            print(f"[iterator_stage] yield {val}")
+            time.sleep(0.1)
+            yield val
 
 
-    async def async_double(x):
-        # print(f"[async_double] doubling {x} ...")
-        await asyncio.sleep(0.3)
-        return x * 2
+    def sync_square(text):
+        """Synchronous function that squares the numeric prefix of the input string."""
+        # Example: "5-gen-2" → extract '5' and compute 5^2
+        num = int(text.split("-")[0])
+        res = num * num
+        print(f"[sync_square] {text} => {res}")
+        return res
 
 
-    def sync_to_str(x):
-        # print(f"[sync_to_str] formatting {x} ...")
-        return f"Result: {x}"
+    async def async_double(n):
+        """Asynchronous function that doubles the input number."""
+        print(f"[async_double] doubling {n}")
+        await asyncio.sleep(0.1)
+        return n * 2
 
+
+    def sync_to_str(n):
+        """Final synchronous stage that formats the result as a string."""
+        s = f"Result: {n}"
+        print(f"[sync_to_str] {s}")
+        return s
+
+
+    # ---------- Build and run the pipeline ----------
 
     q_wait = Queue()
     q_done = Queue()
 
     tfm = TaskFlowManager(q_wait, q_done, retry_on_error=False)
 
+    # ① Upstream generator stage
+    tfm.append_stagefctn(iterator_stage)
+    # ② Normal sync stage
     tfm.append_stagefctn(sync_square)
+    # ③ Async stage
     tfm.append_stagefctn(async_double, thread_worker=1, coroutine_worker=1)
+    # ④ Final sync stage
     tfm.append_stagefctn(sync_to_str)
 
-    for i in range(10):
+    # Feed input data
+    for i in range(5):
         q_wait.put(i)
 
+    # Start the flow
     tfm.start()
-    tfm.await_print()
+    tfm.await_print(interval=0.5)
     tfm.stop()
 
-    for res in q_done.queue:
-        print(res)
+    # Check and display final results
+    results = list(q_done.queue)
+    print("\n=== Final Results ===")
+    for r in results:
+        print(r)
+
+    print(f"\n✅ Total results: {len(results)} (expected: 5 inputs × 3 yields each = 15)")
+    assert len(results) == 5 * 3, f"Expected 15 results, got {len(results)}"

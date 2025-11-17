@@ -29,8 +29,9 @@ def process_item(entry: dict) -> dict:
 
 
 def save_result(entries: list, output_file: str):
-    """Stage 3: Save results to a JSONL file."""
-    save_jsonl(entries, output_file)
+    """Stage 3: Save results to a JSONL file (append mode)."""
+    # ✅ FIX: Use append mode so multiple calls don't overwrite the file
+    save_jsonl(entries, output_file, mode='a')
     print(f"[save_result] wrote {len(entries)} entries to {output_file}")
     return output_file
 
@@ -86,7 +87,7 @@ class TestTaskFlowIterator(unittest.TestCase):
     def test_iterator_to_jsonl_flow(self):
         """Verify full iterator → processing → save pipeline executes successfully."""
         self.tfm.start()
-        self.tfm.await_print(interval=1)
+        self.tfm.await_print(interval=0.5)
         time.sleep(0.5)
         self.tfm.stop()
 
@@ -104,7 +105,8 @@ class TestTaskFlowIterator(unittest.TestCase):
         with open(self.output_file, "r", encoding="utf-8") as f:
             lines = [json.loads(line.strip()) for line in f if line.strip()]
 
-        self.assertEqual(len(lines), 5, "Unexpected number of JSONL lines written")
+        # ✅ Expect 5 total lines now (no overwriting)
+        self.assertEqual(len(lines), 5, f"Expected 5 lines, got {len(lines)}")
 
         # Validate field structure and correctness
         for i, entry in enumerate(lines):
@@ -114,7 +116,7 @@ class TestTaskFlowIterator(unittest.TestCase):
             expected_len = len(f"Sample text {i}")
             self.assertEqual(entry["length"], expected_len, f"Length mismatch for entry {i}")
 
-        print(f"\nSuccessfully validated iterator pipeline output at {self.output_file}")
+        print(f"\n✅ Successfully validated iterator pipeline output at {self.output_file}")
         print(f"Example entry: {lines[0]}")
 
 
