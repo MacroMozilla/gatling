@@ -5,6 +5,18 @@ on:
   pull_request:
 
 jobs:
+  cleanup:
+    name: Cleanup old workflow runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          keep_minimum_runs: 0        # delete all old repo
+          delete_workflow_pattern: ${{ github.workflow }}
+          delete_run_by_conclusion_pattern: "success,skipped,failed"
+
   check-non-english:
     runs-on: ubuntu-latest
 
