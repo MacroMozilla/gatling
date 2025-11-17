@@ -29,7 +29,7 @@ jobs:
           keep_minimum_runs: 0          # Do not keep any runs
 
           # Delete only this workflow’s runs (you can also leave empty to delete all workflows)
-          delete_workflow_pattern: "${{ github.workflow }}.yml"
+          delete_workflow_pattern: "${{ github.workflow }}"
 
           # Include workflows regardless of their state (active/disabled/archived)
           delete_workflow_by_state_pattern: "ALL"
