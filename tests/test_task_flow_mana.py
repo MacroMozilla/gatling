@@ -1,3 +1,4 @@
+import time
 import unittest
 import os
 import json
@@ -75,6 +76,7 @@ class TestTaskFlowHTTP(unittest.TestCase):
         """Verify that the entire pipeline executes successfully."""
         self.tfm.start()
         self.tfm.await_print()
+        time.sleep(0.5)
         self.tfm.stop()
 
         # Check that the JSONL output file exists and is not empty

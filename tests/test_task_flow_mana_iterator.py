@@ -87,6 +87,7 @@ class TestTaskFlowIterator(unittest.TestCase):
         """Verify full iterator → processing → save pipeline executes successfully."""
         self.tfm.start()
         self.tfm.await_print(interval=1)
+        time.sleep(0.5)
         self.tfm.stop()
 
         output_log = self._buffer.getvalue()

@@ -51,7 +51,7 @@ class TestCoroutineThreadManagerGenerator(unittest.IsolatedAsyncioTestCase):
         )
 
         manager.start(thread_worker=1, coroutine_worker=0)
-        time.sleep(0.4)  # Allow it to yield a few values
+        time.sleep(0.5)  # Allow it to yield a few values
         manager.stop()
 
         output = self.get_output()
