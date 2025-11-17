@@ -211,7 +211,7 @@ class TaskQueueTracker:
             def sync_wrapper():
                 # Take input arguments from the stage's waiting queue
                 args_kwargs = stage.q_wait_info.get()
-                stage.q_wait_info.task_done()
+                # stage.q_wait_info.task_done()
 
                 if args_kwargs is self.SENTINEL:
                     return
@@ -244,7 +244,7 @@ class TaskQueueTracker:
                 # Take input arguments from the stage's waiting queue
                 loop = asyncio.get_event_loop()
                 args_kwargs = await loop.run_in_executor(None, stage.q_wait_info.get)
-                stage.q_wait_info.task_done()
+                # stage.q_wait_info.task_done()
 
                 if args_kwargs is self.SENTINEL:
                     return
