@@ -1,8 +1,8 @@
 import unittest
 import os
 import tempfile
-from utility.proxy_mana import ProxyManager
-from utility.io_fctns import read_json, save_json
+from src.utility.proxy_mana import ProxyManager
+from src.utility.io_fctns import read_json, save_json
 
 
 class TestProxyManager(unittest.TestCase):
