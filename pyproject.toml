@@ -9,7 +9,8 @@ name = "gatling"
 # 每次发布必须手动改这个
 version = "0.2.0"
 
-description = "A small async/sync task flow management utility library."
+description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
+
 readme = "README.md"
 requires-python = ">=3.11"
 
@@ -29,7 +30,7 @@ Repository = "https://github.com/MacroMozilla/gatling"
 
 [tool.setuptools]
 # 告诉 setuptools：源码在 src/ 目录
-package-dir = {"" = "src"}
+package-dir = {"" = "gatling"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["gatling"]
