@@ -9,13 +9,14 @@ import traceback
 
 class CoroutineThreadManager:
     """
-    A flexible thread manager that can handle:
-      - normal synchronous functions
-      - asynchronous (coroutine) functions
-      - synchronous generators (iterators)
-      - asynchronous generators
+    A general-purpose manager that can run:
+      - Normal synchronous functions
+      - Asynchronous coroutine functions
+      - Synchronous generators (iterators)
+      - Asynchronous generators
 
-    Each mode runs safely in background threads with cooperative shutdown.
+    Each type runs in its own proper mode (threaded or async),
+    with cooperative shutdown.
     """
 
     def __init__(self, task_func: Callable, args: tuple = (), kwargs: Optional[dict] = None):
@@ -33,31 +34,28 @@ class CoroutineThreadManager:
     # -------------------------------------------------------------------------
     def start(self, thread_worker: int = 1, coroutine_worker: int = 0):
         """
-        Start the CoroutineThreadManager.
+        Start the manager and launch tasks.
 
         :param thread_worker: Number of OS threads to run.
-        :param coroutine_worker: Number of asyncio tasks per thread (for async task functions).
+        :param coroutine_worker: Number of asyncio tasks per thread (only for async functions).
         """
-        # Prevent starting if already running
         if self.stop_event is not None and not self.stop_event.is_set():
             raise RuntimeError("Manager is already running")
 
-        # === Detect function type ===
+        # === Detect the function type ===
         is_async = inspect.iscoroutinefunction(self.task_func)
         is_gen = inspect.isgeneratorfunction(self.task_func)
         is_asyncgen = inspect.isasyncgenfunction(self.task_func)
 
         self.stop_event = threading.Event()
 
-        # === Validate configuration ===
+        # === Validate config ===
         if is_async and coroutine_worker <= 0:
             coroutine_worker = 1
         if (is_async and coroutine_worker == 0) or (not is_async and coroutine_worker > 0):
-            raise ValueError(
-                f"[{self.task_func.__name__}] invalid mode: async={is_async}, async_worker={coroutine_worker}"
-            )
+            raise ValueError(f"[{self.task_func.__name__}] invalid mode: async={is_async}, async_worker={coroutine_worker}")
 
-        # === Display start mode ===
+        # === Display mode info ===
         if is_async:
             print(f"[Async start] threads={thread_worker}, async_workers={coroutine_worker}")
         elif is_gen or is_asyncgen:
@@ -75,8 +73,8 @@ class CoroutineThreadManager:
                 while not self.stop_event.is_set():
                     try:
                         await self.task_func(*self.args, **self.kwargs)
-                    except Exception as e:
-                        print(f"async worker-{worker_id} exception:", e)
+                    except Exception:
+                        print(f"async worker-{worker_id} exception:")
                         traceback.print_exc()
                     await asyncio.sleep(0.05)
 
@@ -88,8 +86,9 @@ class CoroutineThreadManager:
                 loop.run_until_complete(main())
             except asyncio.CancelledError:
                 pass
-            except Exception as e:
-                print("loop exception:", e)
+            except Exception:
+                print("loop exception:")
+                traceback.print_exc()
             finally:
                 loop.close()
 
@@ -98,9 +97,11 @@ class CoroutineThreadManager:
         def thread_target_sync():
             while not self.stop_event.is_set():
                 try:
-                    self.task_func(*self.args, **self.kwargs)
-                except Exception as e:
-                    print("sync task exception:", e)
+                    result = self.task_func(*self.args, **self.kwargs)
+                    print(f"[sync result] => {result}")
+                except Exception:
+                    print("sync task exception:")
+                    traceback.print_exc()
                 time.sleep(0.05)
 
         # ------------------------------------------------------------------
@@ -108,41 +109,60 @@ class CoroutineThreadManager:
         def thread_target_gen():
             try:
                 gen = self.task_func(*self.args, **self.kwargs)
-                for val in gen:
-                    if self.stop_event and self.stop_event.is_set():
+                if not hasattr(gen, "__next__"):
+                    raise TypeError(f"{self.task_func.__name__} did not return an iterator")
+
+                while not self.stop_event.is_set():
+                    try:
+                        val = next(gen)
+                        print(f"[iterator yield] => {val}")
+                    except StopIteration:
                         break
-                    # Optional: handle yielded values here (log, queue, etc.)
-                    # print(f"[gen] yielded: {val}")
+                    except Exception:
+                        print("generator iteration exception:")
+                        traceback.print_exc()
+                        break
                     time.sleep(0.05)
-            except Exception as e:
-                print("generator exception:", e)
+
+            except Exception:
+                print("generator init exception:")
                 traceback.print_exc()
 
         # ------------------------------------------------------------------
         # === Async generator worker ===
         def thread_target_asyncgen():
-            async def run_asyncgen():
-                agen = self.task_func(*self.args, **self.kwargs)
-                try:
-                    async for val in agen:
-                        if self.stop_event and self.stop_event.is_set():
-                            break
-                        # Optional: handle yielded values here (log, queue, etc.)
-                        # print(f"[asyncgen] yielded: {val}")
-                        await asyncio.sleep(0.05)
-                except Exception as e:
-                    print("async generator exception:", e)
-                    traceback.print_exc()
-
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+
+            async def run_asyncgen():
+                try:
+                    agen = self.task_func(*self.args, **self.kwargs)
+                    if not hasattr(agen, "__anext__"):
+                        raise TypeError(f"{self.task_func.__name__} did not return an async iterator")
+
+                    while not self.stop_event.is_set():
+                        try:
+                            val = await agen.__anext__()
+                            print(f"[async iterator yield] => {val}")
+                        except StopAsyncIteration:
+                            break
+                        except Exception:
+                            print("async generator iteration exception:")
+                            traceback.print_exc()
+                            break
+                        await asyncio.sleep(0.05)
+
+                except Exception:
+                    print("async generator init exception:")
+                    traceback.print_exc()
+
             try:
                 loop.run_until_complete(run_asyncgen())
             finally:
                 loop.close()
 
         # ------------------------------------------------------------------
-        # === Select the proper worker target ===
+        # === Choose the right thread target ===
         self.executor = ThreadPoolExecutor(max_workers=thread_worker)
         if is_asyncgen:
             target = thread_target_asyncgen
@@ -151,7 +171,7 @@ class CoroutineThreadManager:
         else:
             target = thread_target_async if is_async else thread_target_sync
 
-        # === Launch worker threads ===
+        # === Launch threads ===
         for _ in range(thread_worker):
             self.executor.submit(target)
 
@@ -161,75 +181,73 @@ class CoroutineThreadManager:
         if not self.stop_event:
             return
 
-        # Signal all workers to stop
         self.stop_event.set()
 
-        # Shutdown the thread pool
         if self.executor:
             self.executor.shutdown(wait=not force)
             self.executor = None
 
-        print(f"TCM({self.task_func.__name__}) stopped !!!")
-
-        # Clear the stop event only after all threads are finished
+        print(f"CTM({self.task_func.__name__}) stopped !!!")
         self.stop_event = None
 
 
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
-
-    async def async_worker_task(name, delay=0.5):
+    async def async_worker_task(name, delay=0.3):
         print(f"async task {name} running")
         await asyncio.sleep(delay)
+        print(f"**2 (async result for {name})")
+        return f"async-{name}-done"
 
-    def sync_worker_task(name, delay=0.5):
+    def sync_worker_task(name, delay=0.3):
         print(f"sync task {name} running")
         time.sleep(delay)
+        result = "**2 (sync result)"
+        print(result)
+        return result
 
-    def sync_generator_worker(name, delay=0.2, count=5):
+    def sync_generator_worker(name, delay=0.2, count=3):
         for i in range(count):
-            print(f"sync generator {name} yielding {i}")
+            val = f"**{i+2} (iterator {name})"
+            print(f"sync generator yielding: {val}")
             time.sleep(delay)
-            yield i
+            yield val
 
-    async def async_generator_worker(name, delay=0.2, count=5):
+    async def async_generator_worker(name, delay=0.2, count=3):
         for i in range(count):
-            print(f"async generator {name} yielding {i}")
+            val = f"**{i+2} (async iterator {name})"
+            print(f"async generator yielding: {val}")
             await asyncio.sleep(delay)
-            yield i
+            yield val
 
     # ---------------------------------------------------------------------
-    print("=== test async ===")
-    manager = CoroutineThreadManager(async_worker_task, args=("A",), kwargs={"delay": 0.3})
-    manager.start(thread_worker=2, coroutine_worker=2)
+    print("\n=== Test: Async Function ===")
+    m = CoroutineThreadManager(async_worker_task, args=("A",))
+    m.start(thread_worker=1, coroutine_worker=2)
     time.sleep(2)
-    manager.stop()
+    m.stop()
 
-    # ---------------------------------------------------------------------
-    print("=== test sync ===")
-    manager = CoroutineThreadManager(sync_worker_task, args=("B",), kwargs={"delay": 0.2})
-    manager.start(thread_worker=2, coroutine_worker=0)
+    print("\n=== Test: Sync Function ===")
+    m = CoroutineThreadManager(sync_worker_task, args=("B",))
+    m.start(thread_worker=2)
     time.sleep(2)
-    manager.stop()
+    m.stop()
 
-    # ---------------------------------------------------------------------
-    print("=== test sync generator ===")
-    manager = CoroutineThreadManager(sync_generator_worker, args=("SyncGen",), kwargs={"delay": 0.2, "count": 3})
-    manager.start(thread_worker=1, coroutine_worker=0)
+    print("\n=== Test: Sync Generator ===")
+    m = CoroutineThreadManager(sync_generator_worker, args=("SyncGen",))
+    m.start(thread_worker=1)
     time.sleep(2)
-    manager.stop()
+    m.stop()
 
-    # ---------------------------------------------------------------------
-    print("=== test async generator ===")
-    manager = CoroutineThreadManager(async_generator_worker, args=("AsyncGen",), kwargs={"delay": 0.2, "count": 3})
-    manager.start(thread_worker=1, coroutine_worker=0)
+    print("\n=== Test: Async Generator ===")
+    m = CoroutineThreadManager(async_generator_worker, args=("AsyncGen",))
+    m.start(thread_worker=1)
     time.sleep(2)
-    manager.stop()
+    m.stop()
 
-    # ---------------------------------------------------------------------
-    print("=== test invalid combination ===")
+    print("\n=== Test: Invalid Combination ===")
     try:
-        manager = CoroutineThreadManager(sync_worker_task)
-        manager.start(thread_worker=2, coroutine_worker=2)
+        m = CoroutineThreadManager(sync_worker_task)
+        m.start(thread_worker=2, coroutine_worker=2)
     except Exception as e:
         print("Error:", e)

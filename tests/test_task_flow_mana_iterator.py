@@ -3,6 +3,8 @@ import os
 import json
 import tempfile
 import time
+import io
+import sys
 from queue import Queue
 
 from gatling.utility.task_flow_manager import TaskFlowManager
@@ -10,7 +12,7 @@ from gatling.utility.io_fctns import save_jsonl
 
 
 # ========= Stage functions (iterator pipeline) =========
-def iterator_source(count: int, delay: float = 0.1):
+def iterator_source(count: int, delay: float = 0.05):
     """Stage 1: Generator that yields synthetic JSON objects."""
     for i in range(count):
         print(f"[iterator_source] yielding item {i}")
@@ -21,12 +23,15 @@ def iterator_source(count: int, delay: float = 0.1):
 def process_item(entry: dict) -> dict:
     """Stage 2: Process each generated item."""
     text = entry.get("text", "")
-    return {"id": entry["id"], "length": len(text)}
+    processed = {"id": entry["id"], "length": len(text)}
+    print(f"[process_item] processed id={entry['id']} -> length={processed['length']}")
+    return processed
 
 
 def save_result(entries: list, output_file: str):
     """Stage 3: Save results to a JSONL file."""
     save_jsonl(entries, output_file)
+    print(f"[save_result] wrote {len(entries)} entries to {output_file}")
     return output_file
 
 
@@ -35,6 +40,11 @@ class TestTaskFlowIterator(unittest.TestCase):
     """End-to-end test for iterator-based TaskFlowManager pipeline."""
 
     def setUp(self):
+        # Redirect stdout to capture all prints
+        self._stdout = sys.stdout
+        self._buffer = io.StringIO()
+        sys.stdout = self._buffer
+
         # Temporary directory for JSONL output
         self.tempdir = tempfile.TemporaryDirectory()
         self.output_file = os.path.join(self.tempdir.name, "iterator_results.jsonl")
@@ -67,30 +77,45 @@ class TestTaskFlowIterator(unittest.TestCase):
         gen_wrapper()
 
     def tearDown(self):
+        # Stop manager and restore stdout
         self.tfm.stop()
+        sys.stdout = self._stdout
         self.tempdir.cleanup()
 
+    # ----------------------------------------------------------------------
     def test_iterator_to_jsonl_flow(self):
-        """Verify full iterator→processing→save pipeline executes successfully."""
+        """Verify full iterator → processing → save pipeline executes successfully."""
         self.tfm.start()
-        self.tfm.await_print()
+        self.tfm.await_print(timeout=2)
         self.tfm.stop()
 
+        output_log = self._buffer.getvalue()
+        print("Captured output:\n", output_log)
+
+        # Verify pipeline stages printed expected messages
+        self.assertIn("[iterator_source] yielding item 0", output_log)
+        self.assertIn("[process_item] processed id=0", output_log)
+        self.assertIn("[save_result]", output_log)
+
         # Validate the output JSONL file
-        self.assertTrue(os.path.exists(self.output_file))
+        self.assertTrue(os.path.exists(self.output_file), "Output JSONL file missing")
+
         with open(self.output_file, "r", encoding="utf-8") as f:
             lines = [json.loads(line.strip()) for line in f if line.strip()]
-        self.assertGreater(len(lines), 0, "Output JSONL file is empty")
 
-        # Validate field structure
-        for entry in lines:
+        self.assertEqual(len(lines), 5, "Unexpected number of JSONL lines written")
+
+        # Validate field structure and correctness
+        for i, entry in enumerate(lines):
             self.assertIn("id", entry)
             self.assertIn("length", entry)
+            self.assertEqual(entry["id"], i, f"ID mismatch for entry {i}")
+            expected_len = len(f"Sample text {i}")
+            self.assertEqual(entry["length"], expected_len, f"Length mismatch for entry {i}")
 
-        print(f"\nSuccessfully saved iterator results to {self.output_file}")
+        print(f"\nSuccessfully validated iterator pipeline output at {self.output_file}")
         print(f"Example entry: {lines[0]}")
 
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-    
