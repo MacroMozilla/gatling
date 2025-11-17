@@ -11,15 +11,17 @@ permissions:
 
 jobs:
   cleanup:
-    name: Cleanup old workflow runs
+    name: Cleanup previous runs
     runs-on: ubuntu-latest
     steps:
-      - name: Delete old workflow runs
+      - name: Wait a bit for previous runs to finalize
+        run: sleep 10
+      - name: Delete previous workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          keep_minimum_runs: 0        # delete all old repo
-          delete_workflow_pattern: ${{ github.workflow }}
+          delete_workflow_pattern: "Check Non-English Text"   # 👈 必须精确匹配 name
+          keep_minimum_runs: 0
           delete_run_by_conclusion_pattern: "success,skipped,failed"
 
   check-non-english:
