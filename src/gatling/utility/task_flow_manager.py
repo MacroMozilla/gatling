@@ -6,8 +6,8 @@ from datetime import timedelta
 from queue import Queue
 from typing import Callable, List, Any, Optional
 
-from src.utility.coroutine_thread_mana import CoroutineThreadManager
-from src.utility.watch import Watch
+from gatling.utility.coroutine_thread_mana import CoroutineThreadManager
+from gatling.utility.watch import Watch
 
 
 class FakeQueue(Queue):

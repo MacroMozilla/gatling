@@ -1,8 +1,8 @@
 import unittest
 import os
 import tempfile
-from src.utility.proxy_mana import ProxyManager
-from src.utility.io_fctns import read_json, save_json
+from src.gatling.utility.proxy_mana import ProxyManager
+from src.gatling.utility.io_fctns import read_json, save_json
 
 
 class TestProxyManager(unittest.TestCase):

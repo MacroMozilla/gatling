@@ -4,9 +4,9 @@ import json
 import tempfile
 from queue import Queue
 
-from src.utility.io_fctns import save_jsonl
-from src.utility.async_fetch_fctns import async_fetch_http, fwrap
-from src.utility.task_flow_manager import TaskFlowManager  # Make sure this class is available
+from src.gatling.utility.io_fctns import save_jsonl
+from src.gatling.utility.async_fetch_fctns import async_fetch_http, fwrap
+from src.gatling.utility.task_flow_manager import TaskFlowManager  # Make sure this class is available
 
 
 # ========= Stage functions =========

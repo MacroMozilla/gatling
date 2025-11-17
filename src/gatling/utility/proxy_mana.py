@@ -3,7 +3,7 @@ import random
 
 from fake_useragent import UserAgent
 
-from src.utility.io_fctns import  save_jsonl, read_jsonl
+from gatling.utility.io_fctns import  save_jsonl, read_jsonl
 
 ua = UserAgent()
 
