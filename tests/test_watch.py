@@ -2,7 +2,7 @@ import unittest
 import time
 from datetime import timedelta
 
-from src.gatling.utility.watch import Watch, watch_time  # adjust import path if needed
+from gatling.utility.watch import Watch, watch_time  # adjust import path if needed
 
 
 class TestWatchTime(unittest.TestCase):

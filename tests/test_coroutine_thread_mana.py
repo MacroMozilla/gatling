@@ -2,7 +2,7 @@ import unittest
 import asyncio
 import time
 
-from src.gatling.utility.coroutine_thread_mana import CoroutineThreadManager
+from gatling.utility.coroutine_thread_mana import CoroutineThreadManager
 
 
 # === Worker functions for testing ===
