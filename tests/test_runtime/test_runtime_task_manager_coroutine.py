@@ -6,7 +6,8 @@ from test_helper.dynamic_testcase import DynamicTestCase
 
 
 # DynamicTestCase.set_name('TestRuntimeTaskManagerCoroutine')
-class TestRuntimeTaskManagerCoroutine(DynamicTestCase): pass
+class TestRuntimeTaskManagerCoroutine(DynamicTestCase):
+    pass
 
 
 # Define Test Case Function

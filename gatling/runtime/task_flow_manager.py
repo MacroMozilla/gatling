@@ -402,7 +402,7 @@ class TaskFlowManager:
 
 if __name__ == '__main__':
     pass
-    from gatling.utility.sample_tasks import async_fake_fctn_io, wrap_async_iter, fake_fctn_io, wrap_iter, fake_fctn_cpu, real_fctn_cpu, mix64
+    from gatling.utility.sample_tasks import async_fake_fctn_io, wrap_async_iter, fake_fctn_io, wrap_iter, fake_fctn_cpu, real_fctn_cpu
     # === async ===
     task_async_fake_fctn = async_fake_fctn_io
     task_async_fake_iter = wrap_async_iter(n=2)(async_fake_fctn_io)

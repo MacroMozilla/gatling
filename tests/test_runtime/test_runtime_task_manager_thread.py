@@ -1,12 +1,13 @@
 import time
 import unittest
 from gatling.runtime.runtime_task_manager_thread import RuntimeTaskManagerThread
-from gatling.utility.sample_tasks import async_fake_fctn_io, wrap_async_iter, fake_fctn_io, wrap_iter, fake_fctn_cpu, real_fctn_cpu
+from gatling.utility.sample_tasks import fake_fctn_io, wrap_iter, fake_fctn_cpu, real_fctn_cpu
 from test_helper.dynamic_testcase import DynamicTestCase
 
 
 # DynamicTestCase.set_name('TestRuntimeTaskManagerCoroutine')
-class TestRuntimeTaskManagerThread(DynamicTestCase): pass
+class TestRuntimeTaskManagerThread(DynamicTestCase):
+    pass
 
 
 # Define Test Case Function

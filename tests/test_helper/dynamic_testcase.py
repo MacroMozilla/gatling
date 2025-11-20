@@ -13,7 +13,8 @@ class DynamicTestCase(unittest.TestCase):
         if not test_case_name.startswith("test_"):
             test_case_name = f"test_{test_case_name}"
 
-        testcase_method = lambda self: test_case_fctn(*args, **kwargs)
+        def testcase_method(self):
+            return test_case_fctn(*args, **kwargs)
         testcase_method.__name__ = test_case_name
         setattr(cls, test_case_name, testcase_method)
 
