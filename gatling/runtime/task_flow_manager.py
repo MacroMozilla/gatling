@@ -359,28 +359,28 @@ class TaskFlowManager:
             tcm.start(worker=worker)
 
     def stop(self):
-        # 启动一个专门的 sentinel 广播线程
+        # Start a dedicated sentinel broadcast thread.
 
         stop_flag = threading.Event()
 
         def broadcast_sentinel():
-            """持续发送 SENTINEL 直到 stop_flag 置位"""
+            """Continuously send SENTINELs until the stop_flag is set."""
             while not stop_flag.is_set():
                 for stage in self.tqt.stages:
-                    # 给每个阶段的 wait 队列都投放几个停止信号
+                    # Send several stop signals into the wait queue of each stage.
                     stage.q_wait_info.put(self.tqt.SENTINEL)
-                time.sleep(0.001)  # 避免 CPU 空转
+                time.sleep(0.001)  # Avoid CPU spinning.
 
         with ThreadPoolExecutor(max_workers=1) as tpe:
             future = tpe.submit(broadcast_sentinel)
-            # 先让 RuntimeTaskManager 停止工作线程
+            # RuntimeTaskManager stopped the worker thread
             for rtm in self.rtms:
                 rtm.stop()
-            # 等待所有 RuntimeTaskManager 完全退出
+            # Wait for all RuntimeTaskManager instances to fully exit.
             for rtm in self.rtms:
                 if hasattr(rtm, "join"):
                     rtm.join(timeout=2)
-            # 告诉广播线程可以停了
+            # Signal the broadcast thread to terminate.
             stop_flag.set()
             future.result()
 
