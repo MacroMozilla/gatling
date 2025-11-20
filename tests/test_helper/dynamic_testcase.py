@@ -22,7 +22,6 @@ class DynamicTestCase(unittest.TestCase):
 if __name__ == '__main__':
     pass
     DynamicTestCase.set_name('MyTestCase')
-
-
     # or
-    class MyTestCase(DynamicTestCase): pass
+    class MyTestCase(DynamicTestCase):
+        pass
