@@ -1,4 +1,3 @@
-
 # 🧩 Gatling Utility Library
 
 **Gatling** is a lightweight asynchronous utility library built on `aiohttp`, `asyncio`, and `threading`.
@@ -38,15 +37,17 @@ Provides unified async/sync HTTP request helpers supporting `GET`, `POST`, `PUT`
 from gatling.utility.http_fetch_fctns import sync_fetch_http, async_fetch_http, fwrap
 import asyncio, aiohttp
 
+target_url = "https://httpbin.org/get"
 # --- Synchronous request ---
-result, status, size = sync_fetch_http("https://httpbin.org/get")
+result, status, size = sync_fetch_http(target_url)
 print(status, size, result[:80])
 
 
 # --- Asynchronous request ---
 async def main():
-    res, status, size  = await fwrap(async_fetch_http, rtype="json")
+    res, status, size = await fwrap(async_fetch_http, target_url=target_url, rtype="json")
     print(res)
+
 
 asyncio.run(main())
 
@@ -62,7 +63,9 @@ asyncio.run(main())
 
 ## 🧵 2. Coroutine & Thread Manager
 
-**File:** `gatling/utility/coroutine_thread_mana.py`
+**File:** `gatling/runtime/runtime_task_manager_thread.py`
+
+**File:** `gatling/runtime/runtime_task_manager_coroutine.py`
 
 A hybrid **thread + coroutine** manager that can run both sync and async tasks concurrently.
 
@@ -70,44 +73,103 @@ A hybrid **thread + coroutine** manager that can run both sync and async tasks c
 
 ```python
 from gatling.runtime.runtime_task_manager_thread import RuntimeTaskManagerThread
-import asyncio, time
+import time
 
 
 # --- Async task ---
-async def async_job(name, delay=0.5):
-    print(f"{name} running")
-    await asyncio.sleep(delay)
-
-
-# --- Sync task ---
-def sync_job(name, delay=0.5):
+def async_fctn(name, delay=0.1):
     print(f"{name} running")
     time.sleep(delay)
 
 
+def async_iter(name, delay=0.1):
+    for i in range(5):
+        sent = f"{name}-{i}"
+        yield sent
+        time.sleep(delay)  # simulate async source
+
+
 # Async mode
-m = RuntimeTaskManagerThread(async_job, args=("async-A",), kwargs={"delay": 0.3})
-m.start(thread_worker=2, coroutine_worker=2)
-time.sleep(2)
+print("--- Function ---")
+m = RuntimeTaskManagerThread(async_fctn, args=("fctn",), kwargs={"delay": 0.1})
+m.start(worker=2)
+time.sleep(0.5)
 m.stop()
 
-# Sync mode
-m = RuntimeTaskManagerThread(sync_job, args=("sync-B",), kwargs={"delay": 0.2})
-m.start(thread_worker=2)
-time.sleep(2)
+print("--- Function with Context Manager ---")
+m = RuntimeTaskManagerThread(async_fctn, args=("fctn",), kwargs={"delay": 0.1})
+with m.execute(worker=2):
+    time.sleep(0.5)
+
+print("--- Iterator ---")
+m = RuntimeTaskManagerThread(async_iter, args=("iter",), kwargs={"delay": 0.1})
+m.start(worker=2)
+time.sleep(0.5)
 m.stop()
+
+print("--- Iterator with Context Manager ---")
+m = RuntimeTaskManagerThread(async_iter, args=("iter",), kwargs={"delay": 0.1})
+with m.execute(worker=2):
+    time.sleep(0.5)
+
+```
+
+```python
+from gatling.runtime.runtime_task_manager_coroutine import RuntimeTaskManagerCoroutine
+from gatling.runtime.runtime_task_manager_thread import RuntimeTaskManagerThread
+import asyncio, time
+
+
+# --- Async task ---
+
+async def async_fctn(name, delay=0.5):
+    print(f"{name} running")
+    await asyncio.sleep(delay)
+
+
+async def async_iter(name, delay=0.1):
+    for i in range(10):
+        sent = f"{name}-{i}"
+        print(sent)
+        yield sent
+        await asyncio.sleep(delay)  # simulate async source
+
+
+# Async mode
+print("--- Async Function ---")
+m = RuntimeTaskManagerCoroutine(async_fctn, args=("async_fctn",), kwargs={"delay": 0.1})
+m.start(worker=2)
+time.sleep(0.5)
+m.stop()
+
+print("--- Async Function with Context Manager ---")
+m = RuntimeTaskManagerCoroutine(async_fctn, args=("async_fctn",), kwargs={"delay": 0.1})
+with m.execute(worker=2):
+    time.sleep(0.5)
+
+print("--- Async Iterator ---")
+m = RuntimeTaskManagerCoroutine(async_iter, args=("async_iter",), kwargs={"delay": 0.1})
+m.start(worker=2)
+time.sleep(0.5)
+m.stop()
+
+print("--- Async Iterator with Context Manager ---")
+m = RuntimeTaskManagerCoroutine(async_iter, args=("async_iter",), kwargs={"delay": 0.1})
+with m.execute(worker=2):
+    time.sleep(0.5)
+
 ```
 
 **Main methods**
 
-* `.start(thread_worker, coroutine_worker)`: Starts the workers
+* `.start(worker:int)`: Starts the workers
 * `.stop()`: Stops all threads safely
 
 ---
 
 ## 💾 3. File Utility Module
 
-**File:** `gatling/utility/file_utils.py`
+**File:** `gatling/utility/io_fctns.py`
 
 Convenient helpers for reading and writing JSON, JSONL, Pickle, TOML, text, and byte files.
 
@@ -118,12 +180,18 @@ from gatling.utility.io_fctns import *
 
 save_json({"a": 1}, "data.json")
 print(read_json("data.json"))
+remove_file("data.json")
 
 save_jsonl([{"x": 1}, {"x": 2}], "data.jsonl")
 print(read_jsonl("data.jsonl"))
 
+remove_file("data.jsonl")
+
 save_text("Hello world", "msg.txt")
 print(read_text("msg.txt"))
+
+remove_file("msg.txt")
+
 ```
 
 **Main functions**
@@ -148,8 +216,8 @@ Each stage can be synchronous or asynchronous.
 ### Example
 
 ```python
-from gatling.runtime.task_flow_manager import TaskFlowManager
-from queue import Queue
+from gatling.runtime.taskflow_manager import TaskFlowManager
+from gatling.storage.queue.memory_queue import MemoryQueue
 import asyncio, time
 
 
@@ -164,25 +232,24 @@ async def async_double(x):
 
 
 def sync_to_str(x):
-    return f"Result: {x}"
+    return f"Result<{x}>"
 
 
-q_wait = Queue()
-q_done = Queue()
+q_wait = MemoryQueue()
+q_done = MemoryQueue()
 
-tfm = TaskFlowManager(q_wait, q_done, retry_on_error=False)
-tfm.append_stagefctn(sync_square)
-tfm.append_stagefctn(async_double)
-tfm.append_stagefctn(sync_to_str)
-
+# Queue must have items before starting.
 for i in range(5):
     q_wait.put(i)
 
-tfm.start()
-tfm.await_print(interval=1)
-tfm.stop()
+tfm = TaskFlowManager(q_wait, q_done, retry_on_error=False)
+with tfm.execute(log_interval=1):
+    tfm.register_thread(sync_square, worker=2)
+    tfm.register_coroutine(async_double, worker=5)
+    tfm.register_thread(sync_to_str, worker=2)
 
-print(list(q_done.queue))
+print(list(q_done))
+
 ```
 
 **Main classes**
@@ -192,7 +259,7 @@ print(list(q_done.queue))
 
 ---
 
-## ⏱️ 5. Stopwatch Utility
+## ⏱️ 5. Watch Utility
 
 **File:** `gatling/utility/watch.py`
 
@@ -215,6 +282,7 @@ slow_func()
 w = Watch()
 time.sleep(0.5)
 print("Δt:", w.see_seconds(), "Total:", w.total_seconds())
+
 ```
 
 **Main items**

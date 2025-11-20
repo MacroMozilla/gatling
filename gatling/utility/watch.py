@@ -33,13 +33,13 @@ class Watch:
 
 
 def watch_time(func):
+    pass
     """A decorator to measure and print the execution time of a function."""
 
     @functools.wraps(func)
     def wrap(*args, **kwargs):
         w = Watch()
         res = func(*args, **kwargs)
-
         # The first and only call to see_seconds() measures the total duration
         print(f"Time Cost : '{func.__name__}' took {w.see_seconds()} seconds")
         return res
@@ -49,3 +49,11 @@ def watch_time(func):
 
 if __name__ == '__main__':
     pass
+
+
+    @Watch()
+    def slow_func():
+        time.sleep(1)
+
+
+    slow_func()

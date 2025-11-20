@@ -2,7 +2,7 @@ import time
 import unittest
 from gatling.runtime.runtime_task_manager_coroutine import RuntimeTaskManagerCoroutine
 from gatling.utility.sample_tasks import async_fake_fctn_io, wrap_async_iter
-from test_helper.dynamic_testcase import DynamicTestCase
+from helper.dynamic_testcase import DynamicTestCase
 
 
 # DynamicTestCase.set_name('TestRuntimeTaskManagerCoroutine')
