@@ -1,5 +1,5 @@
 from gatling.utility.http_fetch_fctns import sync_fetch_http, async_fetch_http, fwrap
-import asyncio, aiohttp
+import asyncio
 
 target_url = "https://httpbin.org/get"
 # --- Synchronous request ---
