@@ -25,8 +25,8 @@ class RuntimeTaskManager(ABC):
     @contextmanager
     def execute(self, worker=1):
         """
-        用于 with 语法的上下文包装：
-        在进入时启动，退出时自动停止。
+        A context wrapper for use with the with syntax:
+        Starts on entry and automatically stops on exit.
         """
         try:
             self.start(worker)
