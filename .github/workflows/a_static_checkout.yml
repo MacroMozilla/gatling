@@ -1,4 +1,4 @@
-name: ♻ Static Checkout
+name: Static Checkout ♻
 
 on:
   push:
