@@ -1,4 +1,4 @@
-from gatling.utility.io_fctns import *
+from gatling.utility.io_fctns import save_jsonl,read_jsonl,save_json,read_json,save_text,read_text,remove_file
 
 save_json({"a": 1}, "data.json")
 print(read_json("data.json"))
