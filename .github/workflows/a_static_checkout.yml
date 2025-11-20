@@ -36,7 +36,7 @@ jobs:
           token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 0                # Default is 30 days; must be 0 to delete ALL runs
-          keep_minimum_runs: 3          # Do not keep any runs
+          keep_minimum_runs: 0          # Do not keep any runs
           delete_workflow_pattern: "${{ github.workflow }}"
           delete_workflow_by_state_pattern: "ALL"
           delete_run_by_conclusion_pattern: "ALL"

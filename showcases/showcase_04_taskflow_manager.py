@@ -1,6 +1,7 @@
 from gatling.runtime.taskflow_manager import TaskFlowManager
 from gatling.storage.queue.memory_queue import MemoryQueue
-import asyncio, time
+import asyncio
+import time
 
 
 def sync_square(x):

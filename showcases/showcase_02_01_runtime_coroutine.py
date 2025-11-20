@@ -1,5 +1,6 @@
 from gatling.runtime.runtime_task_manager_coroutine import RuntimeTaskManagerCoroutine
-import asyncio, time
+import asyncio
+import time
 
 
 # --- Async task ---
