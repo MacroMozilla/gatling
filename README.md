@@ -45,14 +45,11 @@ print(status, size, result[:80])
 
 # --- Asynchronous request ---
 async def main():
-    async with aiohttp.ClientSession() as session:
-        res, status, size = await async_fetch_http(
-            "https://httpbin.org/ip", session=session, rtype="json"
-        )
-        print(res)
-
+    res, status, size  = await fwrap(async_fetch_http, rtype="json")
+    print(res)
 
 asyncio.run(main())
+
 ```
 
 **Main functions**
@@ -72,7 +69,7 @@ A hybrid **thread + coroutine** manager that can run both sync and async tasks c
 ### Example
 
 ```python
-from gatling.utility.coroutine_thread_mana import CoroutineThreadManager
+from gatling.runtime.runtime_task_manager_thread import RuntimeTaskManagerThread
 import asyncio, time
 
 
@@ -89,13 +86,13 @@ def sync_job(name, delay=0.5):
 
 
 # Async mode
-m = CoroutineThreadManager(async_job, args=("async-A",), kwargs={"delay": 0.3})
+m = RuntimeTaskManagerThread(async_job, args=("async-A",), kwargs={"delay": 0.3})
 m.start(thread_worker=2, coroutine_worker=2)
 time.sleep(2)
 m.stop()
 
 # Sync mode
-m = CoroutineThreadManager(sync_job, args=("sync-B",), kwargs={"delay": 0.2})
+m = RuntimeTaskManagerThread(sync_job, args=("sync-B",), kwargs={"delay": 0.2})
 m.start(thread_worker=2)
 time.sleep(2)
 m.stop()
@@ -151,7 +148,7 @@ Each stage can be synchronous or asynchronous.
 ### Example
 
 ```python
-from gatling.utility.task_flow_manager import TaskFlowManager
+from gatling.runtime.task_flow_manager import TaskFlowManager
 from queue import Queue
 import asyncio, time
 

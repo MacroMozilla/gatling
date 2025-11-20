@@ -1,10 +1,10 @@
-name: Check Non English
+name: Static Checkout
 
 on:
   push:
     paths:
       - '.github/**'
-      - 'src/**'
+      - 'gatling/**'
       - 'tests/**'
       - 'pyproject.toml'
       - 'requirements.txt'
@@ -12,7 +12,7 @@ on:
   pull_request:
     paths:
       - '.github/**'
-      - 'src/**'
+      - 'gatling/**'
       - 'tests/**'
       - 'pyproject.toml'
       - 'requirements.txt'
@@ -33,47 +33,36 @@ jobs:
       - name: Delete ALL workflow runs in this repository
         uses: Mattraks/delete-workflow-runs@v2
         with:
-          # Your PAT with actions:write permission
           token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
           repository: ${{ github.repository }}
-
-          # Remove all runs without keeping any history
           retain_days: 0                # Default is 30 days; must be 0 to delete ALL runs
-          keep_minimum_runs: 0          # Do not keep any runs
-
-          # Delete only this workflow’s runs (you can also leave empty to delete all workflows)
+          keep_minimum_runs: 3          # Do not keep any runs
           delete_workflow_pattern: "${{ github.workflow }}"
-
-          # Include workflows regardless of their state (active/disabled/archived)
           delete_workflow_by_state_pattern: "ALL"
-
-          # Delete runs of all conclusion types
-          delete_run_by_conclusion_pattern: "SUCCESS,FAILURE,CANCELLED,TIMED_OUT,NEUTRAL,SKIPPED,STALE,ACTION_REQUIRED"
-
-          # Disable dry-run mode to actually perform deletion
+          delete_run_by_conclusion_pattern: "ALL"
           dry_run: false
 
 
-  check-non-english:
+  static-checkout:
     runs-on: ubuntu-latest
     needs: [ cleanup ]
     steps:
-      - name: Checkout repository
+      - name: Static Checkout
         uses: actions/checkout@v4
 
-      - name: Check for non-English letters in src/ and tests/
+      - name: Check for non-English letters
         run: |
-          echo "🔍 Scanning src/ and tests/ for non-English letters (allowing all symbols)..."
+          echo "🔍 Scanning for non-English letters (allowing all symbols)..."
           
           # Directories to check
-          TARGET_DIRS="src tests .github pyproject.toml"
+          TARGET_DIRS="gatling tests .github pyproject.toml"
           
           # Regex explanation:
           # \p{L} = any kind of letter (Unicode category)
           # [^\u0000-\u007F] = exclude ASCII range
           # So: find any "letter" outside English ASCII range (A-Z, a-z)
           non_english_files=$(grep -rIn --include='*.*' -P '[^\x00-\x7F&&\p{L}]' $TARGET_DIRS 2>/dev/null || true)
-
+          
           # Alternate (better) version: explicitly match non-Latin letters
           non_english_files=$(grep -rIn --include='*.*' -P '[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}\p{Arabic}\p{Cyrillic}]' $TARGET_DIRS 2>/dev/null || true)
 
@@ -84,5 +73,22 @@ jobs:
             echo "Please remove or replace non-English letters before committing."
             exit 1
           else
-            echo "✅ All files in src/ and tests/ contain only English letters (symbols are allowed)."
+            echo "✅ All files contain only English letters (symbols are allowed)."
           fi
+
+      # -------------------------
+      # 2. Ruff Lint
+      # -------------------------
+      - name: Ruff Lint
+        uses: chartboost/ruff-action@v1
+
+      #      # -------------------------
+      #      # 3. CodeQL Security Scan
+      #      # -------------------------
+      #      - name: Initialize CodeQL
+      #        uses: github/codeql-action/init@v4
+      #        with:
+      #          languages: python
+      #
+      #      - name: Perform CodeQL Analysis
+      #        uses: github/codeql-action/analyze@v4

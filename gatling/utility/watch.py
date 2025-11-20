@@ -1,38 +1,40 @@
 import functools
 import datetime
+import time
+
 
 class Watch:
     """A simple stopwatch class using the datetime library."""
-    def __init__(self, fctn=datetime.datetime.now):
+
+    def __init__(self, fctn=time.perf_counter):
         self.fctn = fctn
         self.tick = self.fctn()
         self.records = []
 
-    def see_timedelta(self):
-        """Records and returns the timedelta since the last check."""
+    def see_seconds(self, rd=6) -> float:
         tick = self.fctn()
-        res = tick - self.tick
-        self.records.append(res)
+        delta_seconds = tick - self.tick
+        self.records.append(delta_seconds)
         self.tick = tick
+        return round(delta_seconds, rd) if rd is not None else delta_seconds
+
+    def see_timedelta(self, rd=6) -> datetime.timedelta:
+        seconds = self.see_seconds(rd=rd)
+        res = datetime.timedelta(seconds=seconds)
         return res
 
-    def see_seconds(self):
-        """Records and returns the seconds since the last check."""
-        return round(self.see_timedelta().total_seconds(), 6)
+    def total_seconds(self, rd=6):
+        raw_secs = sum(self.records, 0)
+        return round(raw_secs, rd) if rd is not None else raw_secs
 
-    def total_timedelta(self):
-        """Returns the total accumulated timedelta from all records."""
-        # Use datetime.timedelta() as the starting value for the sum
-        totalTime = sum(self.records, datetime.timedelta())
-        return totalTime
-
-    def total_seconds(self):
-        """Returns the total accumulated seconds from all records."""
-        return round(self.total_timedelta().total_seconds(), 6)
+    def total_timedelta(self, rd=6):
+        total_seconds = self.total_seconds(rd=rd)
+        return datetime.timedelta(seconds=total_seconds)
 
 
 def watch_time(func):
     """A decorator to measure and print the execution time of a function."""
+
     @functools.wraps(func)
     def wrap(*args, **kwargs):
         w = Watch()

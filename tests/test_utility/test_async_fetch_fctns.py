@@ -1,5 +1,7 @@
 import unittest
 import json
+from typing import Literal
+
 from gatling.utility.http_fetch_fctns import sync_fetch_http
 
 
@@ -43,8 +45,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_get_text(self):
         """GET request returning HTML text."""
         url = "https://httpbin.org/html"
-        method = "GET"
-        rtype = "text"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+        rtype: Literal["text", "json", "bytes"] = "text"
         result, status, size = sync_fetch_http(url, method=method, rtype=rtype)
         self.assertEqual(status, 200)
         log_response("GET text", url, method, rtype, status, size, result)
@@ -52,8 +54,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_get_json(self):
         """GET request returning JSON data."""
         url = "https://httpbin.org/get"
-        method = "GET"
-        rtype = "json"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+        rtype: Literal["text", "json", "bytes"] = "json"
         result, status, size = sync_fetch_http(url, method=method, rtype=rtype)
         self.assertEqual(status, 200)
         log_response("GET json", url, method, rtype, status, size, result)
@@ -61,8 +63,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_get_bytes(self):
         """GET request returning binary data (PNG image)."""
         url = "https://httpbin.org/image/png"
-        method = "GET"
-        rtype = "bytes"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+        rtype: Literal["text", "json", "bytes"] = "bytes"
         result, status, size = sync_fetch_http(url, method=method, rtype=rtype)
         self.assertEqual(status, 200)
         log_response("GET bytes", url, method, rtype, status, size, result)
@@ -70,8 +72,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_post_text(self):
         """POST request returning text (form-encoded)."""
         url = "https://httpbin.org/post"
-        method = "POST"
-        rtype = "text"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "POST"
+        rtype: Literal["text", "json", "bytes"] = "text"
         result, status, size = sync_fetch_http(url, method=method, data={"k": "v"}, rtype=rtype)
         self.assertEqual(status, 200)
         log_response("POST text", url, method, rtype, status, size, result)
@@ -79,8 +81,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_post_json(self):
         """POST request returning JSON response."""
         url = "https://httpbin.org/post"
-        method = "POST"
-        rtype = "json"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "POST"
+        rtype: Literal["text", "json", "bytes"] = "json"
         data = json.dumps({"a": 1, "b": 2})
         headers = {"Content-Type": "application/json"}
         result, status, size = sync_fetch_http(
@@ -92,8 +94,8 @@ class TestSyncFetchHttp(unittest.TestCase):
     def test_post_bytes(self):
         """POST request returning binary response."""
         url = "https://httpbin.org/post"
-        method = "POST"
-        rtype = "bytes"
+        method: Literal["GET", "POST", "PUT", "DELETE"] = "POST"
+        rtype: Literal["text", "json", "bytes"] = "bytes"
         payload = b"test-binary-data"
         result, status, size = sync_fetch_http(url, method=method, data=payload, rtype=rtype)
         self.assertEqual(status, 200)

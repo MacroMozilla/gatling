@@ -1,11 +1,7 @@
 import os
 import random
 
-from fake_useragent import UserAgent
-
-from gatling.utility.io_fctns import  save_jsonl, read_jsonl
-
-ua = UserAgent()
+from gatling.utility.io_fctns import save_jsonl, read_jsonl
 
 K_proxy = 'proxy'
 K_success = 'success'
