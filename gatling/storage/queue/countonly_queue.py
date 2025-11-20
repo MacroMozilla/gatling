@@ -1,4 +1,3 @@
-from typing import Callable, List, Any, Optional, Generic
 from gatling.storage.queue.base_queue import BaseQueue
 
 class CountOnlyQueue(BaseQueue):

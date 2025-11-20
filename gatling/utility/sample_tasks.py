@@ -4,9 +4,7 @@ import random
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Optional, Tuple, Dict
-
-from tqdm import tqdm, trange
+from typing import Optional
 
 from gatling.utility.watch import Watch
 

@@ -1,5 +1,4 @@
 import queue
-import threading
 from .base_queue import BaseQueue
 
 

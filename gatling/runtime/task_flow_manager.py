@@ -3,13 +3,10 @@ import inspect
 import threading
 import time
 import traceback
-from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes.wintypes import HTASK
 from datetime import timedelta
-from queue import Queue
-from typing import Callable, List, Any, Optional, Generic
+from typing import Callable, List, Any, Optional
 
 from gatling.runtime.runtime_task_manager_base import RuntimeTaskManager
 from gatling.runtime.runtime_task_manager_coroutine import RuntimeTaskManagerCoroutine
