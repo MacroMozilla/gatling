@@ -196,10 +196,9 @@ class TaskFlowManager:
         return self.wait_queue
 
 
-from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
-
 if __name__ == '__main__':
     pass
+    from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
 
     # ---------- Build and run the pipeline ----------
     check_globals_pickable()

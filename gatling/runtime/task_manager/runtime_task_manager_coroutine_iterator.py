@@ -98,11 +98,11 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
 
 if __name__ == '__main__':
     pass
-    from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
+    from gatling.vtasks.sample_tasks import async_fake_iter_net
 
     rt = RuntimeTaskManagerCoroutineIterator(async_fake_iter_net, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
 
-    with rt.execute(worker=5, interval=1, logfctn=print_flush):
+    with rt.execute(worker=5, log_interval=1, logfctn=print_flush):
         for i in range(10):
             rt.qwait.put(i)
 

@@ -3,7 +3,6 @@ import threading
 import time
 import traceback
 from concurrent.futures import Future, ProcessPoolExecutor
-
 from typing import Callable, Optional, Any
 
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
@@ -121,19 +120,17 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
         return True
 
 
-from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
-
-
-def lambdafctn(*args, **kwargs):
+def lambda2fctn(*args, **kwargs):
+    from gatling.vtasks.sample_tasks import fake_fctn_cpu
     return fake_fctn_cpu(*args, **kwargs)
 
 
 if __name__ == '__main__':
     pass
 
-    rt = RuntimeTaskManagerProcessingFunction(lambdafctn, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
+    rt = RuntimeTaskManagerProcessingFunction(lambda2fctn, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
 
-    with rt.execute(worker=5, interval=1, logfctn=print_flush):
+    with rt.execute(worker=5, log_interval=1, logfctn=print_flush):
         for i in range(10):
             rt.qwait.put(i)
 
