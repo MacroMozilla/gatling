@@ -110,7 +110,7 @@ class RuntimeTaskManagerProcessingIterator(RuntimeTaskManager):
         return self.process_running_executor_worker
 
     def __str__(self):
-        return f"PrIt" + super().__str__()
+        return "PrIt" + super().__str__()
 
     def start(self, worker):
 

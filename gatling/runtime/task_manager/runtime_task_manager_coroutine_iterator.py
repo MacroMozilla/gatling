@@ -56,7 +56,7 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
         return 0 if (self.asyncio_running_executor is None) else self.asyncio_running_executor.max_workers
 
     def __str__(self):
-        return f"CoIt" + super().__str__()
+        return "CoIt" + super().__str__()
 
     def start(self, worker=None):
 

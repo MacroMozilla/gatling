@@ -8,7 +8,7 @@ from gatling.vtasks.a_const import cpu_flops_per_sec, flops_target
 def calc_fctn_flops(fctn: Callable, init_flops, flops_per_sec=cpu_flops_per_sec, num=1, xrange=range):
     w = Watch()
     for i in xrange(num):
-        seed = fctn()
+        fctn()
     total_cost_secs = w.see_seconds()
     percall_cost_secs = total_cost_secs / num
     percall_flops = flops_per_sec * percall_cost_secs

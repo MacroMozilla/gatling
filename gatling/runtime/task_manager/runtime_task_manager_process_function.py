@@ -73,7 +73,7 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
         return self.process_running_executor_worker
 
     def __str__(self):
-        return f"PrFn" + super().__str__()
+        return "PrFn" + super().__str__()
 
     def start(self, worker):
 

@@ -67,7 +67,7 @@ class RuntimeTaskManagerThreadFunction(RuntimeTaskManager):
         return 0 if (self.thread_running_executor is None) else (self.thread_running_executor._max_workers)
 
     def __str__(self):
-        return f"ThFn" + super().__str__()
+        return "ThFn" + super().__str__()
 
     def start(self, worker):
         if self.thread_running_executor is not None:

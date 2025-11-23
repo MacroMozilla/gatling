@@ -54,7 +54,7 @@ class RuntimeTaskManagerCoroutineFunction(RuntimeTaskManager):
         return 0 if (self.asyncio_running_executor is None) else self.asyncio_running_executor.max_workers
 
     def __str__(self):
-        return f"CoFn" + super().__str__()
+        return "CoFn" + super().__str__()
 
     def start(self, worker):
 

@@ -56,7 +56,7 @@ class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
         return self.thread_running_executor_worker
 
     def __str__(self):
-        return f"ThIt" + super().__str__()
+        return "ThIt" + super().__str__()
 
     def start(self, worker):
         if self.thread_running_executor_worker > 0:

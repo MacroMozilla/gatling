@@ -69,7 +69,7 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
         return 0 if (self.process_running_executor is None) else (self.process_running_executor._max_workers)
 
     def __str__(self):
-        return f"PrFn" + super().__str__()
+        return "PrFn" + super().__str__()
 
     def start(self, worker):
 
