@@ -51,7 +51,7 @@ def bridge(qfm, qto, qwork_callback, stop_event, interval, logfctn):
                     qwork_callback(arg)
                 elif qwork_callback.__name__ == 'get':
                     try:
-                        x = qwork_callback(block=False)
+                        qwork_callback(block=False)
                     except queue.Empty:
                         if stop_event.is_set():
                             break

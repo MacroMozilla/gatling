@@ -1,10 +1,11 @@
-import multiprocess as mp
 import queue
 import threading
 import time
 import traceback
 from concurrent.futures import Future
 from typing import Callable, Any
+
+import multiprocess as mp
 
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
 from gatling.storage.queue.base_queue import BaseQueue
@@ -50,7 +51,7 @@ def bridge(qfm, qto, qwork_callback, stop_event, interval, logfctn):
                     qwork_callback(arg)
                 elif qwork_callback.__name__ == 'get':
                     try:
-                        x = qwork_callback(block=False)
+                        qwork_callback(block=False)
                     except queue.Empty:
                         if stop_event.is_set():
                             break
