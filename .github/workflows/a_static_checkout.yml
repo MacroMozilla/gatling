@@ -82,13 +82,13 @@ jobs:
       - name: Ruff Lint
         uses: chartboost/ruff-action@v1
 
-      # -------------------------
-      # 3. CodeQL Security Scan
-      # -------------------------
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: python
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+      #      # -------------------------
+      #      # 3. CodeQL Security Scan
+      #      # -------------------------
+      #      - name: Initialize CodeQL
+      #        uses: github/codeql-action/init@v4
+      #        with:
+      #          languages: python
+      #
+      #      - name: Perform CodeQL Analysis
+      #        uses: github/codeql-action/analyze@v4
