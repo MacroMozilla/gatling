@@ -27,7 +27,7 @@ def check_globals_pickable():
     problems = []
 
     for name, obj in tqdm(globals().items()):
-        if name.startswith("__"):  # 忽略内置
+        if name.startswith("__"):
             continue
         if isinstance(obj, types.ModuleType):
             continue
