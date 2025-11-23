@@ -1,5 +1,4 @@
 import multiprocess as mp
-import platform
 import queue
 import threading
 import time

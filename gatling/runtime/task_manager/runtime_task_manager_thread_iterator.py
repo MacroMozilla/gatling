@@ -1,10 +1,9 @@
-import inspect
 import queue
 import threading
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, Future
-from typing import Callable, Optional, Any
+from concurrent.futures import Future
+from typing import Callable, Any
 
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
 from gatling.storage.queue.base_queue import BaseQueue

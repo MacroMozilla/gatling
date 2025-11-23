@@ -1,7 +1,6 @@
 import asyncio
 import queue
 import threading
-import time
 import traceback
 from concurrent.futures import Future
 from typing import Callable, Optional, Any

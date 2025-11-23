@@ -3,17 +3,15 @@ import inspect
 import random
 import time
 from collections.abc import Callable
-from functools import wraps
-from typing import Optional
 
-from gatling.utility.decorator_tools import combo_wraps, call_with
+from gatling.utility.decorator_tools import combo_wraps
 from gatling.utility.watch import Watch
 from gatling.vtasks.a_const import size_target, network_bytes_per_sec, disk_bytes_per_sec, flops_target
 from gatling.vtasks.b_attach_flops import attach_flops
 from gatling.vtasks.c_base_fctns import mix64, random_seed_int
 
-mix64 = attach_flops(mix64, 144)
-random_seed_int = attach_flops(random_seed_int, 500)
+mix64 = attach_flops(mix64, 150)
+random_seed_int = attach_flops(random_seed_int, 625)
 
 
 #################################################################### basic prepend funciton ############################################################################

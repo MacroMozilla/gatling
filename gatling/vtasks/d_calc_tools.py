@@ -1,5 +1,4 @@
-from functools import partial
-from typing import Protocol, Any, Callable, TypeVar, cast
+from typing import Callable
 
 from gatling.utility.decorator_tools import call_with
 from gatling.utility.watch import Watch

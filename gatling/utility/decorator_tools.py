@@ -1,4 +1,3 @@
-
 from functools import update_wrapper
 
 
@@ -44,5 +43,3 @@ def call_with(*args, **kwargs):
         return callwith
 
     return decorator
-
-
