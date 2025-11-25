@@ -60,7 +60,7 @@ class TestSyncFetchHttp(unittest.TestCase):
             except Exception as e:
                 last_exception = e
                 print(traceback.format_exc())
-            time.sleep(random.random())  # 随机等待 0–1 秒
+            time.sleep(random.random())  # random wait 0.0 ~ 1.0 sec
         if last_exception:
             raise last_exception
         self.fail(f"Request to {url} failed after {retries} retries")
