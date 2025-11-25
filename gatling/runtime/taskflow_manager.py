@@ -67,7 +67,7 @@ class TaskFlowManager:
             rtm_cls = RuntimeTaskManagerCoroutineIterator
         else:
             raise RuntimeError(f"fctn={fctn} is neither async function nor async generator")
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
         return rtm
 
     def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
