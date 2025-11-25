@@ -21,7 +21,7 @@ class TestWatchTime(unittest.TestCase):
 
         result = decorated_function("demo")
 
-        # ✅ Function runs successfully
+        # Function runs successfully
         self.assertIsInstance(result, str)
         self.assertTrue(result.startswith("OK-"))
 
@@ -47,11 +47,11 @@ class TestWatchTime(unittest.TestCase):
         total_secs = watch.total_seconds()
         self.assertIsInstance(total_secs, float)
 
-        # ✅ Internal structure check
+        # Internal structure check
         self.assertTrue(hasattr(watch, "records"))
         self.assertIsInstance(watch.records, list)
 
-        print("\n✅ All Watch methods executed and returned correct types.")
+        print("\nAll Watch methods executed and returned correct types.")
 
 
 if __name__ == "__main__":
