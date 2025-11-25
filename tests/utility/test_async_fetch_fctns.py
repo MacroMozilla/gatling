@@ -3,7 +3,6 @@ import time
 import traceback
 import unittest
 import json
-from typing import Literal
 
 from tqdm import trange
 
