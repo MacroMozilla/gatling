@@ -1,11 +1,12 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "wheel", "hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
 
 [project]
 name = "gatling"
 dynamic = ["dependencies"]
-version = "0.3.0.3"
+version = "0.3.0.4"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 
@@ -19,8 +20,8 @@ authors = [
 license = { text = "MIT" }
 
 
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
 
 [project.urls]
 Homepage = "https://github.com/MacroMozilla/gatling"
