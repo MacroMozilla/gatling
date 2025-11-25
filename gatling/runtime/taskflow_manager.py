@@ -73,19 +73,19 @@ class TaskFlowManager:
     def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerThreadIterator if is_iter else RuntimeTaskManagerThreadFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
         return rtm
 
     def make_processing(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessingIterator if is_iter else RuntimeTaskManagerProcessingFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
         return rtm
 
     def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessIterator if is_iter else RuntimeTaskManagerProcessFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
         return rtm
 
     def _register_generic(self, make_rtm: Callable, fctn: Callable, worker: int):
