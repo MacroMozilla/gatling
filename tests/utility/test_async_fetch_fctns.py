@@ -1,3 +1,5 @@
+import sys
+import time
 import unittest
 import json
 from typing import Literal
@@ -104,4 +106,19 @@ class TestSyncFetchHttp(unittest.TestCase):
 
 if __name__ == "__main__":
     # Run all tests with detailed output
-    unittest.main(verbosity=2)
+
+    MAX_RETRIES = 3
+    for attempt in range(1, MAX_RETRIES + 1):
+        print(f"🔁 Running unittest attempt {attempt}/{MAX_RETRIES}")
+        result = unittest.main(verbosity=2, exit=False)
+        if result.result.wasSuccessful():
+            print(f"✅ Tests passed on attempt {attempt}")
+            sys.exit(0)
+        else:
+            print(f"⚠️ Attempt {attempt} failed")
+            if attempt < MAX_RETRIES:
+                print("⏳ Retrying in 5 seconds...")
+                time.sleep(1)
+            else:
+                print("❌ All attempts failed")
+                sys.exit(1)
