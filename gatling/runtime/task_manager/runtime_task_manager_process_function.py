@@ -14,20 +14,21 @@ from gatling.storage.queue.memory_queue import MemoryQueue
 from gatling.utility.xprint import print_flush, check_picklable
 
 
-def producer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, interval, logfctn):
+def producer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
     while True:
         try:
             arg = qwait.get(block=False)
             fut = running_executor.apply_async(fctn, (arg,))
+            fut.args = (arg,)
             qwork.put(fut)
         except queue.Empty:
             if thread_stop_event.is_set():
                 break
             else:
-                time.sleep(interval)
+                time.sleep(retry_empty_interval)
 
 
-def consumer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, interval, logfctn):
+def consumer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
     while True:
         try:
             fut = qwork.get(block=False)
@@ -35,15 +36,18 @@ def consumer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, threa
                 res = fut.get()
                 qdone.put(res)
             except Exception:
-                logfctn(traceback.format_exc())
+                errlogfctn(traceback.format_exc())
                 qerrr.put(fut)
+                if retry_on_error:
+                    # currently only support 1 args[0]
+                    qwait.put(fut.args[0])
             finally:
                 pass
         except queue.Empty:
             if thread_stop_event.is_set():
                 break
             else:
-                time.sleep(interval)
+                time.sleep(retry_empty_interval)
 
 
 class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
@@ -54,9 +58,10 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
                  qerrr: BaseQueue[Any],
                  qdone: BaseQueue[Any],
                  worker: int = 1,
-                 interval=0.001, errlogfctn=print_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
-        self.interval = interval
+                 retry_on_error: bool = False,
+                 retry_empty_interval=0.001,
+                 errlogfctn=print_flush):
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
 
         self.thread_stop_event: threading.Event = threading.Event()  # False
         self.process_running_executor: Optional[mp.Pool] = None
@@ -87,11 +92,11 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
         self.process_running_executor_worker = worker
 
         # process function logic begin
-        producer_thread = threading.Thread(target=producer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
+        producer_thread = threading.Thread(target=producer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.retry_on_error, self.retry_empty_interval, self.errlogfctn), daemon=True)
         producer_thread.start()
         self.producers.append(producer_thread)
 
-        consumer_thread = threading.Thread(target=consumer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
+        consumer_thread = threading.Thread(target=consumer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.retry_on_error, self.retry_empty_interval, self.errlogfctn), daemon=True)
         consumer_thread.start()
         self.consumers.append(consumer_thread)
         # process function logic end
@@ -129,7 +134,7 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
 if __name__ == '__main__':
     pass
 
-    from gatling.vtasks.sample_tasks import fake_fctn_cpu,fake_errr,prepend
+    from gatling.vtasks.sample_tasks import fake_fctn_cpu, fake_errr, prepend
 
     errr_fake_fctn_cpu = prepend(fake_errr)(fake_fctn_cpu)
     rt = RuntimeTaskManagerProcessFunction(fake_fctn_cpu, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())

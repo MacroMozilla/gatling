@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from typing import Callable,  Any
+from typing import Callable, Any
 from abc import ABC, abstractmethod
 
 from gatling.storage.queue.base_queue import BaseQueue
@@ -14,7 +14,9 @@ class RuntimeTaskManager(ABC):
                  qwork: BaseQueue[Any],
                  qerrr: BaseQueue[Any],
                  qdone: BaseQueue[Any],
-                 worker: int = 1):
+                 worker: int = 1,
+                 retry_on_error: bool = False,
+                 retry_empty_interval: float = 0.001):
 
         self.fctn = fctn
         self.qwait = qwait
@@ -22,6 +24,8 @@ class RuntimeTaskManager(ABC):
         self.qerrr = qerrr
         self.qdone = qdone
         self.worker = worker
+        self.retry_on_error = retry_on_error
+        self.retry_empty_interval = retry_empty_interval
 
         check_picklable(fctn)
 

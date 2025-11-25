@@ -38,7 +38,7 @@ def real_cpu(flops=flops_target, fctn=mix64, xrange=range):
     return temp
 
 
-def fake_errr(rate=0.1):
+def fake_errr(rate=0.5):
     if random.random() < rate:
         raise Exception("Fake error")
 
@@ -111,6 +111,17 @@ fake_fctn_cpu = prepend(real_cpu)(target_base_fctn)
 async_fake_iter_net = async_repeat(n=2)(async_prepend(async_fake_net)(target_base_fctn))
 fake_iter_disk = repeat(n=2)(prepend(fake_diskio)(target_base_fctn))
 fake_iter_cpu = repeat(n=2)(prepend(real_cpu)(target_base_fctn))
+
+
+errr_base_fctn = prepend(fake_errr)(target_base_fctn)
+async_errr_fctn_net = async_prepend(async_fake_net)(errr_base_fctn)
+errr_fctn_disk = prepend(fake_diskio)(errr_base_fctn)
+errr_fctn_cpu = prepend(real_cpu)(errr_base_fctn)
+
+async_errr_iter_net = async_repeat(n=2)(async_prepend(async_fake_net)(errr_base_fctn))
+errr_iter_disk = repeat(n=2)(prepend(fake_diskio)(errr_base_fctn))
+errr_iter_cpu = repeat(n=2)(prepend(real_cpu)(errr_base_fctn))
+
 
 if __name__ == '__main__':
     pass

@@ -12,7 +12,7 @@ from gatling.storage.queue.memory_queue import MemoryQueue
 from gatling.utility.xprint import print_flush
 
 
-async def async_producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, asyncio_stop_event, interval, logfctn):
+async def async_producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, asyncio_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
     while True:
         try:
             arg = qwait.get(block=False)
@@ -22,15 +22,17 @@ async def async_producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, asyncio_sto
                 async for item in fut_iter:
                     qdone.put(item)
             except Exception:
-                logfctn(traceback.format_exc())
+                errlogfctn(traceback.format_exc())
                 qerrr.put(arg)
+                if retry_on_error:
+                    qwait.put(arg)
             finally:
                 qwork.get(block=False)
         except queue.Empty:
             if asyncio_stop_event.is_set():
                 break
             else:
-                await asyncio.sleep(interval)
+                await asyncio.sleep(retry_empty_interval)
 
 
 class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
@@ -41,10 +43,10 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
                  qerrr: BaseQueue[Any],
                  qdone: BaseQueue[Any],
                  worker: int = 1,
-                 interval=0.001,
+                 retry_on_error: bool = False,
+                 retry_empty_interval=0.001,
                  errlogfctn=print_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
-        self.interval = interval
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker,retry_on_error=retry_on_error,retry_empty_interval=retry_empty_interval)
 
         self.asyncio_stop_event: asyncio.Event = asyncio.Event()  # False
         self.asyncio_running_executor: Optional[CoroutineExecutor] = None
@@ -69,7 +71,7 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
         self.asyncio_running_executor = CoroutineExecutor(max_workers=worker, logfctn=self.errlogfctn)
 
         # start coroutine iterator
-        producer_thread = threading.Thread(target=self.asyncio_running_executor.submit, args=(async_producer_iter_loop, self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.asyncio_stop_event, self.interval, self.errlogfctn), daemon=True)
+        producer_thread = threading.Thread(target=self.asyncio_running_executor.submit, args=(async_producer_iter_loop, self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.asyncio_stop_event,self.retry_on_error, self.retry_empty_interval, self.errlogfctn), daemon=True)
         producer_thread.start()
         self.producers.append(producer_thread)
 

@@ -13,6 +13,10 @@ def print_flush(*args, **kwargs):
     print(*args, flush=True, **kwargs)
 
 
+def print_none(*args, **kwargs):
+    return
+
+
 def check_picklable(target):
     try:
         pickle.dumps(target)

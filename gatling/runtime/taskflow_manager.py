@@ -18,7 +18,7 @@ from gatling.storage.queue.base_queue import BaseQueue
 from gatling.storage.queue.memory_queue import MemoryQueue
 
 from gatling.utility.watch import Watch
-from gatling.utility.xprint import check_globals_pickable, print_flush
+from gatling.utility.xprint import check_globals_pickable, print_flush, print_none
 
 K_cost = 'cost'
 K_speed = 'speed'
@@ -58,7 +58,7 @@ class TaskFlowManager:
             print(f"{i}. {rtm.fctn.__name__} done={id(rtm.qdone)} {rtm.qdone.__class__.__name__}")
         print(f"{id(self.done_queue)=}")
 
-    def make_coroutine(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
+    def make_coroutine(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
         is_async_iter = inspect.isasyncgenfunction(fctn)
         is_async_fctn = asyncio.iscoroutinefunction(fctn)
         if is_async_fctn:
@@ -67,25 +67,25 @@ class TaskFlowManager:
             rtm_cls = RuntimeTaskManagerCoroutineIterator
         else:
             raise RuntimeError(f"fctn={fctn} is neither async function nor async generator")
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
         return rtm
 
-    def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
+    def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerThreadIterator if is_iter else RuntimeTaskManagerThreadFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
         return rtm
 
-    def make_processing(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
+    def make_processing(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessingIterator if is_iter else RuntimeTaskManagerProcessingFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
         return rtm
 
-    def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
+    def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessIterator if is_iter else RuntimeTaskManagerProcessFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
         return rtm
 
     def _register_generic(self, make_rtm: Callable, fctn: Callable, worker: int):
@@ -96,8 +96,8 @@ class TaskFlowManager:
             prev_rtm = self.runtime_task_manager_s[-1]
             prev_rtm.qdone = curr_qwait
 
-        curr_qerrr = self.wait_queue if self.retry_on_error else MemoryQueue()
-        rtm = make_rtm(fctn, qwait=curr_qwait, qwork=MemoryQueue(), qerrr=curr_qerrr, qdone=self.done_queue, worker=worker, interval=self.retry_empty_interval)
+        curr_qerrr = MemoryQueue()
+        rtm = make_rtm(fctn, qwait=curr_qwait, qwork=MemoryQueue(), qerrr=curr_qerrr, qdone=self.done_queue, worker=worker)
         self.runtime_task_manager_s.append(rtm)
 
     def register_coroutine(self, fctn: Callable, worker=1):
@@ -112,8 +112,9 @@ class TaskFlowManager:
     def register_process(self, fctn: Callable, worker=1):
         self._register_generic(self.make_process, fctn, worker)
 
-    def before_await_print(self):
+    def before_start_record(self):
         self.N_already_done = len(self.done_queue)
+        self.N_origin_wait = len(self.wait_queue)
         self.w = Watch()
 
     def start(self):
@@ -128,6 +129,7 @@ class TaskFlowManager:
     def execute(self, log_interval=1):
         try:
             yield self
+            self.before_start_record()
             self.start()
             self.await_print(log_interval=log_interval)
         finally:
@@ -141,10 +143,10 @@ class TaskFlowManager:
         N_done = len(self.done_queue)
 
         N_wait = len(self.wait_queue)
-        N_cur_done = N_done - self.N_already_done
+        N_cur_done = N_done - self.N_already_done  # setup in self.before_start_record()
         N_error = sum(len(stage.qerrr) for stage in self.runtime_task_manager_s if stage.qerrr is not None)
 
-        self.w.see_timedelta()
+        self.w.see_timedelta()  # setup in self.before_start_record()
         cost_td = self.w.total_timedelta()
         cost_sec = cost_td.total_seconds()
 
@@ -154,7 +156,8 @@ class TaskFlowManager:
 
         cost = format_timedelta(cost_td)
 
-        remain = format_timedelta(timedelta(seconds=(N_wait / speed)) if speed > 0 else timedelta.max)
+        N_remain = self.N_origin_wait - N_done  # setup in self.before_start_record()
+        remain = format_timedelta(timedelta(seconds=(N_remain / speed)) if speed > 0 else timedelta.max)
         speedinfo = {}
         speedinfo[K_cost] = cost
         speedinfo[K_speed] = speed
@@ -167,11 +170,10 @@ class TaskFlowManager:
     def __str__(self):
         sent = f"wait[{len(self.wait_queue)}]"
         for tfm in self.runtime_task_manager_s:
-            sent += f" => {tfm}"
+            sent += f" => {str(tfm)}"
         return sent
 
     def await_print(self, log_interval=1.0, logfctn=print):
-        self.before_await_print()
 
         def pack():
             speedinfo = self.get_speedinfo()
@@ -200,6 +202,7 @@ class TaskFlowManager:
 if __name__ == '__main__':
     pass
     from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
+    from gatling.vtasks.sample_tasks import errr_iter_disk, errr_fctn_disk, async_errr_iter_net, async_errr_fctn_net, errr_fctn_cpu, errr_iter_cpu
 
     # ---------- Build and run the pipeline ----------
     check_globals_pickable()
@@ -214,12 +217,35 @@ if __name__ == '__main__':
 
         with tfm.execute(log_interval=1):
             tfm.register_process(fake_fctn_cpu, worker=2)
-            tfm.register_coroutine(async_fake_fctn_net, worker=5)
             tfm.register_thread(fake_fctn_disk, worker=2)
+            tfm.register_coroutine(async_fake_fctn_net, worker=2)
 
             tfm.register_process(fake_iter_cpu, worker=2)
-            tfm.register_coroutine(async_fake_iter_net, worker=8)
-            tfm.register_thread(fake_iter_disk, worker=8)
+            tfm.register_thread(fake_iter_disk, worker=2)
+            tfm.register_coroutine(async_fake_iter_net, worker=2)
+
+            for i in range(10):
+                q_wait.put(i + 1)
+
+        q_done = tfm.get_qdone()
+        results = list(q_done)
+        print(f"\n=== Final Results ({len(results)})===")
+    if True:
+        q_wait = MemoryQueue()
+
+        # for i in range(10):
+        #     q_wait.put(i + 1)
+
+        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=print_none)
+
+        with tfm.execute(log_interval=1):
+            tfm.register_process(errr_fctn_cpu, worker=2)
+            tfm.register_thread(errr_fctn_disk, worker=2)
+            tfm.register_coroutine(async_errr_fctn_net, worker=5)
+
+            tfm.register_process(errr_iter_cpu, worker=2)
+            tfm.register_thread(errr_iter_disk, worker=2)
+            tfm.register_coroutine(async_errr_iter_net, worker=2)
 
             for i in range(10):
                 q_wait.put(i + 1)

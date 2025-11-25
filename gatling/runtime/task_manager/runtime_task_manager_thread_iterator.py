@@ -11,7 +11,7 @@ from gatling.storage.queue.memory_queue import MemoryQueue
 from gatling.utility.xprint import print_flush
 
 
-def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, interval, logfctn):
+def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, retry_on_error, retry_empty_interval, errlogfctn):
     while True:
         try:
             arg = qwait.get(block=False)
@@ -21,15 +21,17 @@ def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, interval, l
                 for item in gen:
                     qdone.put(item)
             except Exception:
-                logfctn(traceback.format_exc())
+                errlogfctn(traceback.format_exc())
                 qerrr.put(arg)
+                if retry_on_error:
+                    qwait.put(arg)
             finally:
                 qwork.get(block=True)
         except queue.Empty:
             if stop_event.is_set():
                 break
             else:
-                time.sleep(interval)
+                time.sleep(retry_empty_interval)
 
 
 class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
@@ -40,10 +42,10 @@ class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
                  qerrr: BaseQueue[Any],
                  qdone: BaseQueue[Any],
                  worker: int = 1,
-                 interval=0.001,
+                 retry_on_error: bool = False,
+                 retry_empty_interval=0.001,
                  errlogfctn=print_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
-        self.interval = interval
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
 
         self.thread_stop_event: threading.Event = threading.Event()  # False
         self.thread_running_executor_worker: int = 0
@@ -68,7 +70,7 @@ class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
         self.thread_running_executor_worker = worker
 
         for i in range(worker):
-            producer_thread = threading.Thread(target=producer_iter_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
+            producer_thread = threading.Thread(target=producer_iter_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.thread_stop_event, self.retry_on_error, self.retry_empty_interval, self.errlogfctn), daemon=True)
             producer_thread.start()
             self.producers.append(producer_thread)
 
