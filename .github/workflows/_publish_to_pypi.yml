@@ -40,6 +40,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Fix Requirements.txt encoding
+        run: |
+          python fix_encoding.py
+
       - name: Install build backend
         run: |
           python -m pip install --upgrade pip
