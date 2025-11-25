@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gatling"
 
-version = "0.3.0.0"
+version = "0.3.0.1"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 
@@ -18,8 +18,10 @@ authors = [
 
 license = { text = "MIT" }
 
-dependencies = [
-]
+
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
 
 [project.urls]
 Homepage = "https://github.com/MacroMozilla/gatling"
