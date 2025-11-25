@@ -42,7 +42,7 @@ jobs:
 
       - name: Fix requirements.txt Encoding
         run: |
-          python ../fix_rq_encoding.py
+          python $GITHUB_WORKSPACE/fix_rq_encoding.py
 
       - name: Install build backend
         run: |
