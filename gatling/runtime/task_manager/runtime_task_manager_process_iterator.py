@@ -76,14 +76,14 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
                  qdone: BaseQueue[Any],
                  worker: int = 1,
                  interval=0.001,
-                 logfctn=print_flush):
+                 errlogfctn=print_flush):
         super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
         self.interval = interval
 
         self.process_stop_event: mp.Event = mp.Event()  # False
         self.thread_stop_event: threading.Event = threading.Event()
         self.process_running_executor_worker: int = 0
-        self.logfctn = logfctn
+        self.errlogfctn = errlogfctn
 
         self.manager = mp.Manager()
         self.process_qwork = self.manager.Queue()
@@ -94,7 +94,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         self.producers_thread = []
         self.producers_process = []
 
-        for fctn in [self.fctn, self.logfctn]:
+        for fctn in [self.fctn, self.errlogfctn]:
             check_picklable(fctn)
 
     def __len__(self):
@@ -110,30 +110,30 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         if self.process_stop_event.is_set() or self.thread_stop_event.is_set():
             raise RuntimeError(f"{str(self)} is stopping")
 
-        self.logfctn(f"{self} start triggered ... ")
+        self.errlogfctn(f"{self} start triggered ... ")
         self.process_running_executor_worker = worker
 
         # bridge thread queue to process queue                                                         track qwork in
-        bridge_t2p_wait_thread = threading.Thread(target=bridge, args=(self.qwait, self.process_qwait, self.qwork.put, self.thread_stop_event, self.interval, self.logfctn), daemon=True)
+        bridge_t2p_wait_thread = threading.Thread(target=bridge, args=(self.qwait, self.process_qwait, self.qwork.put, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
         bridge_t2p_wait_thread.start()
         self.producers_thread.append(bridge_t2p_wait_thread)
 
         for _ in range(worker):
             # start N worker for process
-            producer_process: mp.Process = mp.Process(target=producer_iter_loop, args=(self.fctn, self.process_qwait, self.process_qwork, self.process_qerrr, self.process_qdone, self.process_stop_event, self.interval, self.logfctn))
+            producer_process: mp.Process = mp.Process(target=producer_iter_loop, args=(self.fctn, self.process_qwait, self.process_qwork, self.process_qerrr, self.process_qdone, self.process_stop_event, self.interval, self.errlogfctn))
             producer_process.start()
             self.producers_process.append(producer_process)
 
         # bridge process queue to thread queue
-        bridge_p2t_thread_errr = threading.Thread(target=bridge, args=(self.process_qerrr, self.qerrr, None, self.thread_stop_event, self.interval, self.logfctn), daemon=True)
+        bridge_p2t_thread_errr = threading.Thread(target=bridge, args=(self.process_qerrr, self.qerrr, None, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
         bridge_p2t_thread_errr.start()
         self.producers_thread.append(bridge_p2t_thread_errr)
         #                                                                                              track qwork out
-        bridge_p2t_thread_done = threading.Thread(target=bridge, args=(self.process_qdone, self.qdone, self.qwork.get, self.thread_stop_event, self.interval, self.logfctn), daemon=True)
+        bridge_p2t_thread_done = threading.Thread(target=bridge, args=(self.process_qdone, self.qdone, self.qwork.get, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
         bridge_p2t_thread_done.start()
         self.producers_thread.append(bridge_p2t_thread_done)
 
-        self.logfctn(f"{str(self)} started >>>")
+        self.errlogfctn(f"{str(self)} started >>>")
 
     def stop(self):
         if self.process_running_executor_worker == 0:
@@ -141,7 +141,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         if self.process_stop_event.is_set() or self.thread_stop_event is None:
             return False
 
-        self.logfctn(f"{self} stop triggered ... ")
+        self.errlogfctn(f"{self} stop triggered ... ")
         self.process_stop_event.set()
         self.thread_stop_event.set()
 
@@ -158,7 +158,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         self.process_stop_event.clear()
         self.thread_stop_event.clear()
 
-        self.logfctn(f"{str(self)} stopped !!!")
+        self.errlogfctn(f"{str(self)} stopped !!!")
         return True
 
 

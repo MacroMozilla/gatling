@@ -18,7 +18,7 @@ from gatling.storage.queue.base_queue import BaseQueue
 from gatling.storage.queue.memory_queue import MemoryQueue
 
 from gatling.utility.watch import Watch
-from gatling.utility.xprint import check_globals_pickable
+from gatling.utility.xprint import check_globals_pickable, print_flush
 
 K_cost = 'cost'
 K_speed = 'speed'
@@ -40,7 +40,7 @@ def format_timedelta(delta: timedelta) -> str:
 
 class TaskFlowManager:
 
-    def __init__(self, wait_queue: BaseQueue[Any], done_queue: BaseQueue[Any] = None, errr_queue: BaseQueue[Any] = None, retry_on_error=True, retry_empty_interval=0):
+    def __init__(self, wait_queue: BaseQueue[Any], done_queue: BaseQueue[Any] = None, errr_queue: BaseQueue[Any] = None, retry_on_error=True, retry_empty_interval=0, errlogfctn=print_flush):
 
         # Build stages
         self.runtime_task_manager_s: List[RuntimeTaskManager] = []
@@ -48,6 +48,7 @@ class TaskFlowManager:
         self.done_queue: BaseQueue[Any] = MemoryQueue() if done_queue is None else done_queue
         self.retry_on_error = retry_on_error
         self.retry_empty_interval = retry_empty_interval
+        self.errlogfctn = errlogfctn
 
     def print_rtm(self, msg):
         print(f"==={msg}===" * 128)
@@ -66,25 +67,25 @@ class TaskFlowManager:
             rtm_cls = RuntimeTaskManagerCoroutineIterator
         else:
             raise RuntimeError(f"fctn={fctn} is neither async function nor async generator")
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
         return rtm
 
     def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerThreadIterator if is_iter else RuntimeTaskManagerThreadFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
         return rtm
 
     def make_processing(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessingIterator if is_iter else RuntimeTaskManagerProcessingFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
         return rtm
 
     def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, interval):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessIterator if is_iter else RuntimeTaskManagerProcessFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, interval=interval, logfctn=self.errlogfctn)
         return rtm
 
     def _register_generic(self, make_rtm: Callable, fctn: Callable, worker: int):

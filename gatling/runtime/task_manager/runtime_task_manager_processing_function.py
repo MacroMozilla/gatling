@@ -51,18 +51,18 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
                  qerrr: BaseQueue[Any],
                  qdone: BaseQueue[Any],
                  worker: int = 1,
-                 interval=0.001, logfctn=print_flush):
+                 interval=0.001, errlogfctn=print_flush):
         super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
         self.interval = interval
 
         self.thread_stop_event: threading.Event = threading.Event()  # False
         self.process_running_executor: Optional[ProcessPoolExecutor] = None
-        self.logfctn = logfctn
+        self.errlogfctn = errlogfctn
 
         self.producers = []
         self.consumers = []
 
-        for fctn in [self.fctn, self.logfctn]:
+        for fctn in [self.fctn, self.errlogfctn]:
             check_picklable(fctn)
 
     def __len__(self):
@@ -78,20 +78,20 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
         if self.thread_stop_event.is_set():
             raise RuntimeError(f"{str(self)} is stopping")
 
-        self.logfctn(f"{self} start triggered ... ")
+        self.errlogfctn(f"{self} start triggered ... ")
         self.process_running_executor = ProcessPoolExecutor(max_workers=worker)
 
         # process function logic begin
-        producer_thread = threading.Thread(target=producer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.logfctn), daemon=True)
+        producer_thread = threading.Thread(target=producer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
         producer_thread.start()
         self.producers.append(producer_thread)
 
-        consumer_thread = threading.Thread(target=consumer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.logfctn), daemon=True)
+        consumer_thread = threading.Thread(target=consumer_fctn_loop, args=(self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.process_running_executor, self.thread_stop_event, self.interval, self.errlogfctn), daemon=True)
         consumer_thread.start()
         self.consumers.append(consumer_thread)
         # process function logic end
 
-        self.logfctn(f"{str(self)} started >>>")
+        self.errlogfctn(f"{str(self)} started >>>")
 
     def stop(self):
         if self.process_running_executor is None:
@@ -99,7 +99,7 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
         if self.thread_stop_event.is_set():
             return False
 
-        self.logfctn(f"{self} stop triggered ... ")
+        self.errlogfctn(f"{self} stop triggered ... ")
 
         self.thread_stop_event.set()
 
@@ -116,7 +116,7 @@ class RuntimeTaskManagerProcessingFunction(RuntimeTaskManager):
 
         self.thread_stop_event.clear()
 
-        self.logfctn(f"{str(self)} stopped !!!")
+        self.errlogfctn(f"{str(self)} stopped !!!")
         return True
 
 

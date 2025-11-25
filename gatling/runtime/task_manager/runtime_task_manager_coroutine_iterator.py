@@ -42,13 +42,13 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
                  qdone: BaseQueue[Any],
                  worker: int = 1,
                  interval=0.001,
-                 logfctn=print_flush):
+                 errlogfctn=print_flush):
         super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker)
         self.interval = interval
 
         self.asyncio_stop_event: asyncio.Event = asyncio.Event()  # False
         self.asyncio_running_executor: Optional[CoroutineExecutor] = None
-        self.logfctn = logfctn
+        self.errlogfctn = errlogfctn
 
         self.producers = []
 
@@ -65,15 +65,15 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
         if self.asyncio_stop_event.is_set():
             raise RuntimeError(f"{str(self)} is stopping")
 
-        self.logfctn(f"{self} start triggered ... ")
-        self.asyncio_running_executor = CoroutineExecutor(max_workers=worker, logfctn=self.logfctn)
+        self.errlogfctn(f"{self} start triggered ... ")
+        self.asyncio_running_executor = CoroutineExecutor(max_workers=worker, logfctn=self.errlogfctn)
 
         # start coroutine iterator
-        producer_thread = threading.Thread(target=self.asyncio_running_executor.submit, args=(async_producer_iter_loop, self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.asyncio_stop_event, self.interval, self.logfctn), daemon=True)
+        producer_thread = threading.Thread(target=self.asyncio_running_executor.submit, args=(async_producer_iter_loop, self.fctn, self.qwait, self.qwork, self.qerrr, self.qdone, self.asyncio_stop_event, self.interval, self.errlogfctn), daemon=True)
         producer_thread.start()
         self.producers.append(producer_thread)
 
-        self.logfctn(f"{str(self)} started >>>")
+        self.errlogfctn(f"{str(self)} started >>>")
 
     def stop(self):
         if self.asyncio_running_executor is None:
@@ -81,7 +81,7 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
         if self.asyncio_stop_event.is_set():
             return False
 
-        self.logfctn(f"{self} stop triggered ... ")
+        self.errlogfctn(f"{self} stop triggered ... ")
         self.asyncio_stop_event.set()
 
         for producer_thread in self.producers:
@@ -92,7 +92,7 @@ class RuntimeTaskManagerCoroutineIterator(RuntimeTaskManager):
 
         self.asyncio_stop_event.clear()
 
-        self.logfctn(f"{str(self)} stopped !!!")
+        self.errlogfctn(f"{str(self)} stopped !!!")
         return True
 
 
