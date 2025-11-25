@@ -118,6 +118,7 @@ class TaskFlowManager:
         self.w = Watch()
 
     def start(self):
+        self.before_start_record()
         for rtm in self.runtime_task_manager_s:
             rtm.start(rtm.worker)
 
@@ -129,7 +130,6 @@ class TaskFlowManager:
     def execute(self, log_interval=1):
         try:
             yield self
-            self.before_start_record()
             self.start()
             self.await_print(log_interval=log_interval)
         finally:

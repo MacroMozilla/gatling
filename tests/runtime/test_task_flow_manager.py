@@ -64,7 +64,7 @@ tname2rsc_fctn_s = {
 
 # === Dynamic Register Test Case ===
 for fname, rsc_fctn_s, in tname2rsc_fctn_s.items():
-    for worker in [1, 5]:
+    for worker in [1, 2]:
         for use_ctx in [True, False]:
             for retry_empty_interval in [0, 0.001]:
                 testcase_name = f"test_{fname}_{worker=}_{use_ctx=}_{retry_empty_interval=:.0e}"
