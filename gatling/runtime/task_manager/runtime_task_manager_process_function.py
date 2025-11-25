@@ -129,12 +129,13 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
 if __name__ == '__main__':
     pass
 
-    from gatling.vtasks.sample_tasks import fake_fctn_cpu
+    from gatling.vtasks.sample_tasks import fake_fctn_cpu,fake_errr,prepend
 
+    errr_fake_fctn_cpu = prepend(fake_errr)(fake_fctn_cpu)
     rt = RuntimeTaskManagerProcessFunction(fake_fctn_cpu, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
 
     with rt.execute(worker=5, log_interval=1, logfctn=print_flush):
-        for i in range(10):
+        for i in range(100):
             rt.qwait.put(i)
 
     print(f"[{len(rt.qdone)}] : {list(rt.qdone)}")

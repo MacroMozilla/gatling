@@ -44,8 +44,8 @@ class RuntimeTaskManager(ABC):
         Starts on entry and automatically stops on exit.
         """
         try:
-            self.start(worker)
             yield self
+            self.start(worker)
             self.await_done(log_interval=log_interval, logfctn=logfctn)
         finally:
             self.stop()
