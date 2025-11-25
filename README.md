@@ -79,22 +79,16 @@ Provides unified async/sync HTTP request helpers supporting `GET`, `POST`, `PUT`
 
 ```python
 from gatling.utility.http_fetch_fctns import sync_fetch_http, async_fetch_http, fwrap
-import asyncio, aiohttp
+import asyncio
 
 target_url = "https://httpbin.org/get"
-# --- Synchronous request ---
-result, status, size = sync_fetch_http(target_url)
-print(status, size, result[:80])
+print("--- Synchronous request ---")
+result, status, size = sync_fetch_http(target_url, rtype="json")
+print(status, size, result)
 
-
-# --- Asynchronous request ---
-async def main():
-    res, status, size = await fwrap(async_fetch_http, target_url=target_url, rtype="json")
-    print(res)
-
-
-asyncio.run(main())
-
+print("--- Asynchronous request ---")
+result, status, size = asyncio.run(fwrap(async_fetch_http, target_url=target_url, rtype="json"))
+print(status, size, result)
 ```
 
 **Main functions**
