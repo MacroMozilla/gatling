@@ -40,9 +40,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Fix Requirements.txt encoding
+      - name: Fix requirements.txt Encoding
         run: |
-          python fix_encoding.py
+          python ../fix_rq_encoding.py
 
       - name: Install build backend
         run: |
