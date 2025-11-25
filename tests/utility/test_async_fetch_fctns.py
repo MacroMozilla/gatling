@@ -1,5 +1,3 @@
-import sys
-import time
 import unittest
 import json
 from typing import Literal
@@ -107,7 +105,9 @@ class TestSyncFetchHttp(unittest.TestCase):
 if __name__ == "__main__":
     pass
     # Run all tests with detailed output
-
+    # unittest.main(verbosity=2)
+    # import sys
+    # import time
     # MAX_RETRIES = 3
     # for attempt in range(1, MAX_RETRIES + 1):
     #     print(f"🔁 Running unittest attempt {attempt}/{MAX_RETRIES}")
