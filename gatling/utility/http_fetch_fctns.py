@@ -115,8 +115,7 @@ async def fwrap(
             **kwargs,
         )
 
-    connector = aiohttp.TCPConnector(limit=100, use_dns_cache=True)
-    async with aiohttp.ClientSession(connector=connector) as new_session:
+    async with aiohttp.ClientSession() as new_session:
         if logfctn:
             logfctn("[fwrap] Created new session via async with")
         result = await fctn(
