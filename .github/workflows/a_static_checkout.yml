@@ -79,21 +79,21 @@ jobs:
           if [ -n "$non_english_files" ]; then
             echo "❌ Found non-English letters:"
             echo ""
-            
+          
             # Process each line, extract and highlight problematic characters
             echo "$non_english_files" | while IFS= read -r line; do
               # Extract file:line part
               file_info=$(echo "$line" | cut -d: -f1-2)
               content=$(echo "$line" | cut -d: -f3-)
-              
+          
               # Extract all non-English letter characters
               bad_chars=$(echo "$content" | grep -oP '[^\x00-\x7F\p{S}\p{P}\p{N}\p{Z}\p{M}\p{C}]' | sort -u | tr -d '\n')
-              
+          
               echo "$file_info: [ $bad_chars ]"
               echo "    $content"
               echo ""
             done
-            
+          
             echo "Please remove or replace non-English letters before committing."
             exit 1
           else
@@ -105,9 +105,7 @@ jobs:
       # -------------------------
       - name: Ruff Lint
         uses: chartboost/ruff-action@v1
-        with:
-          # E731: Do not assign a lambda expression, use a def
-          args: --ignore E731
+
 
       # -------------------------
       # 3. CodeQL Security Scan
