@@ -9,10 +9,10 @@ class MemoryQueue(BaseQueue):
         super().__init__()
         self._queue = queue.Queue(maxsize=maxsize)
 
-    def put(self, item, block=True, timeout=None):
+    def put(self, item, block=False, timeout=None):
         self._queue.put(item, block=block, timeout=timeout)
 
-    def get(self, block=True, timeout=None):
+    def get(self, block=False, timeout=None):
         return self._queue.get(block=block, timeout=timeout)
 
     def clear(self):

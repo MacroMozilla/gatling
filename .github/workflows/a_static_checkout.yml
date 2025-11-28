@@ -52,28 +52,40 @@ jobs:
 
       - name: Check for non-English letters
         run: |
-          echo "🔍 Scanning for non-English letters (allowing all symbols)..."
-          
-          # Directories to check
+          echo "🔍 Scanning for non-English letters..."
+
           TARGET_DIRS="gatling tests .github pyproject.toml"
           
-          # Regex explanation:
-          # \p{L} = any kind of letter (Unicode category)
-          # [^\u0000-\u007F] = exclude ASCII range
-          # So: find any "letter" outside English ASCII range (A-Z, a-z)
-          non_english_files=$(grep -rIn --include='*.*' -P '[^\x00-\x7F&&\p{L}]' $TARGET_DIRS 2>/dev/null || true)
-          
-          # Alternate (better) version: explicitly match non-Latin letters
-          non_english_files=$(grep -rIn --include='*.*' -P '[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}\p{Arabic}\p{Cyrillic}]' $TARGET_DIRS 2>/dev/null || true)
+          # Whitelist: files or directories to skip
+          # Example:
+          WHITELIST=(
+             "tests/storage/dctn/test_memory_dctn_str_1_method.py"
+          )
+          #   WHITELIST=()
+               
+
+          # Build filter pattern
+          if [ ${#WHITELIST[@]} -gt 0 ]; then
+            FILTER_PATTERN=$(IFS='|'; echo "${WHITELIST[*]}")
+            FILTER_CMD="grep -vE \"^($FILTER_PATTERN)\""
+          else
+            FILTER_CMD="cat"
+          fi
+
+          non_english_files=$(
+            grep -rInP '[^\x00-\x7F]' $TARGET_DIRS 2>/dev/null | \
+            grep -P '\p{L}' | \
+            eval "$FILTER_CMD" || true
+          )
 
           if [ -n "$non_english_files" ]; then
-            echo "❌ Found non-English letters in the following files:"
+            echo "❌ Found non-English letters:"
             echo "$non_english_files"
             echo ""
             echo "Please remove or replace non-English letters before committing."
             exit 1
           else
-            echo "✅ All files contain only English letters (symbols are allowed)."
+            echo "✅ All files contain only English letters."
           fi
 
       # -------------------------

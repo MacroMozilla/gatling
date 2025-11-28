@@ -3,57 +3,52 @@ import threading
 from queue import Empty, Full
 from gatling.storage.queue.memory_queue import MemoryQueue
 
+Item_A = "A"
+Item_B = "B"
+Item_C = "C"
+
 
 class TestMemoryQueue(unittest.TestCase):
     """Unit tests for MemoryQueue class."""
 
-    def test_basic_put_get(self):
-        """Test putting and getting items."""
+    def test_basic_put_get_len(self):
         q = MemoryQueue()
-        q.put("apple")
-        q.put("banana")
-
+        q.put(Item_A)
+        q.put(Item_B)
         self.assertEqual(len(q), 2)
-        self.assertEqual(q.get(), "apple")
-        self.assertEqual(q.get(), "banana")
-        self.assertTrue(q._queue.empty())
-
-    def test_delete_clears_queue(self):
-        """Test that delete() clears all items."""
-        q = MemoryQueue()
-        q.put("x")
-        q.put("y")
-        self.assertEqual(len(q), 2)
-
-        q.clear()
+        self.assertEqual(q.get(), Item_A)
+        self.assertEqual(q.get(), Item_B)
         self.assertEqual(len(q), 0)
-        self.assertTrue(q._queue.empty())
 
-    def test_len_and_iter(self):
-        """Test len() and iteration return expected values."""
-        q = MemoryQueue()
-        q.put("A")
-        q.put("B")
-        self.assertEqual(len(q), 2)
+    def test_put_raise_full(self):
+        q = MemoryQueue(maxsize=1)
+        q.put(Item_A)
+        with self.assertRaises(Full):
+            q.put(Item_B)
 
-        items = list(q)
-        self.assertEqual(items, ["A", "B"])
-
-    def test_get_block_false_raises(self):
-        """Test get() with block=False raises Empty if no item."""
+    def test_get_raise_empty(self):
         q = MemoryQueue()
         with self.assertRaises(Empty):
-            q.get(block=False)
+            q.get()
 
-    def test_put_respects_maxsize(self):
-        """Test put() respects maxsize limit."""
-        q = MemoryQueue(maxsize=1)
-        q.put("A")
-        with self.assertRaises(Full):
-            q.put("B", block=False)
+    def test_clear_queue(self):
+        q = MemoryQueue()
+        q.put(Item_A)
+        q.put(Item_B)
+        self.assertEqual(len(q), 2)
+        q.clear()
+        self.assertEqual(len(q), 0)
 
-    def test_multithreaded_put_get(self):
-        """Test thread-safe concurrent put/get operations."""
+    def test_len_and_iter(self):
+        q = MemoryQueue()
+        q.put(Item_A)
+        q.put(Item_B)
+        q.put(Item_C)
+        self.assertEqual(len(q), 3)
+        items = list(q)
+        self.assertEqual(items, [Item_A, Item_B, Item_C])
+
+    def test_thread_safe_put_get(self):
         q = MemoryQueue()
         results = []
 
@@ -75,8 +70,7 @@ class TestMemoryQueue(unittest.TestCase):
         self.assertEqual(sorted(results), [0, 1, 2, 3, 4])
         self.assertTrue(q._queue.empty())
 
-    def test_open_and_close_do_not_raise(self):
-        """Test open() and close() can be called safely."""
+    def test_open_and_close(self):
         q = MemoryQueue()
         try:
             q.open()
@@ -84,7 +78,14 @@ class TestMemoryQueue(unittest.TestCase):
         except Exception as e:
             self.fail(f"open/close raised unexpectedly: {e}")
 
+    def test_context_manager(self):
+        q = MemoryQueue()
+        try:
+            with q:
+                pass
+        except Exception as e:
+            self.fail(f"context manager raised unexpectedly: {e}")
+
 
 if __name__ == "__main__":
-    # TODO add more test
     unittest.main(verbosity=2)
