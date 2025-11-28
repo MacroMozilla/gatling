@@ -1,9 +1,6 @@
 import unittest
-import threading
-from queue import Empty, Full
 
 from gatling.storage.dctn.memory_dctn import MemoryDctn
-from gatling.storage.queue.memory_queue import MemoryQueue
 
 Key_A = "A"
 Key_B = "B"
