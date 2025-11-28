@@ -69,7 +69,7 @@ jobs:
             FILTER_CMD="cat"
           fi
           
-          # 检测非英文字母
+          # Detect non-English letters (exclude symbols, punctuation, numbers, etc.)
           non_english_files=$(
             grep -rInP '[^\x00-\x7F]' $TARGET_DIRS 2>/dev/null | \
             grep -P '[^\x00-\x7F\p{S}\p{P}\p{N}\p{Z}\p{M}\p{C}]' | \
@@ -80,16 +80,16 @@ jobs:
             echo "❌ Found non-English letters:"
             echo ""
             
-            # 逐行处理，提取并高亮问题字符
+            # Process each line, extract and highlight problematic characters
             echo "$non_english_files" | while IFS= read -r line; do
-              # 提取文件名和行号部分
+              # Extract file:line part
               file_info=$(echo "$line" | cut -d: -f1-2)
               content=$(echo "$line" | cut -d: -f3-)
               
-              # 提取所有非英文字母字符
+              # Extract all non-English letter characters
               bad_chars=$(echo "$content" | grep -oP '[^\x00-\x7F\p{S}\p{P}\p{N}\p{Z}\p{M}\p{C}]' | sort -u | tr -d '\n')
               
-              echo "$file_info: 【 $bad_chars 】"
+              echo "$file_info: [ $bad_chars ]"
               echo "    $content"
               echo ""
             done
