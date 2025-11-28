@@ -58,7 +58,7 @@ class TestMemoryDctn(unittest.TestCase):
         del d[Key_A]
         self.assertEqual(len(d), 0)
         with self.assertRaises(KeyError):
-            res = d[Key_A]
+            print(d[Key_A])
 
     def test_keys(self):
         d = MemoryDctn()

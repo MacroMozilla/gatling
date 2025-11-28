@@ -1,15 +1,12 @@
 import json
-
+import unittest
 from gatling.utility.mem_tools import sizeof
 from helper.get_varname import get_var_name
 from storage.dctn import test_memory_dctn_str_0_objs
-
-varname2obj = {get_var_name(obj, vars(test_memory_dctn_str_0_objs)): obj for obj in test_memory_dctn_str_0_objs.memorydctn_objs}
-
-import unittest
-
 from gatling.storage.dctn.memory_dctn import MemoryDctn
 from helper.dynamic_testcase import DynamicTestCase
+
+varname2obj = {get_var_name(obj, vars(test_memory_dctn_str_0_objs)): obj for obj in test_memory_dctn_str_0_objs.memorydctn_objs}
 
 
 # DynamicTestCase.set_name('TestRuntimeTaskManagerCoroutine')
