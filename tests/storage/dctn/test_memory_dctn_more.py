@@ -10,7 +10,7 @@ Value_3_B = 3
 Value_2_C = 2
 
 
-class TestMemoryDctn(unittest.TestCase):
+class TestMemoryDctnMore(unittest.TestCase):
     """Unit tests for MemoryDctn class."""
 
     def test_basic_set_get_len(self):
@@ -36,13 +36,6 @@ class TestMemoryDctn(unittest.TestCase):
         d[Key_A] = Value_1_A
         self.assertEqual(d.pop(Key_C, Value_2_C), Value_2_C)
         self.assertEqual(len(d), 1)
-
-    def test_update(self):
-        d = MemoryDctn()
-        d.update({Key_A: Value_1_A, Key_B: Value_3_B})
-        self.assertEqual(len(d), 2)
-        self.assertEqual(d[Key_A], Value_1_A)
-        self.assertEqual(d[Key_B], Value_3_B)
 
     def test_clear(self):
         d = MemoryDctn()
@@ -86,18 +79,18 @@ class TestMemoryDctn(unittest.TestCase):
 
     def test_eq(self):
         d1 = MemoryDctn()
-        d1.update({Key_A: Value_1_A, Key_B: Value_3_B})
+        d1.setmany({Key_A: Value_1_A, Key_B: Value_3_B})
         d2 = MemoryDctn()
-        d2.update({Key_B: Value_3_B, Key_A: Value_1_A})
+        d2.setmany({Key_B: Value_3_B, Key_A: Value_1_A})
         self.assertEqual(d1, d2)
         d3 = {Key_B: Value_3_B, Key_A: Value_1_A}
         self.assertEqual(d1, d3)
 
     def test_ne(self):
         d1 = MemoryDctn()
-        d1.update({Key_A: Value_1_A, Key_B: Value_3_B})
+        d1.setmany({Key_A: Value_1_A, Key_B: Value_3_B})
         d2 = MemoryDctn()
-        d2.update({Key_B: Value_3_B, Key_A: Value_2_C})
+        d2.setmany({Key_B: Value_3_B, Key_A: Value_2_C})
         self.assertNotEqual(d1, d2)
         d3 = {Key_B: Value_3_B, Key_A: Value_2_C}
         self.assertNotEqual(d1, d3)
@@ -118,6 +111,7 @@ class TestMemoryDctn(unittest.TestCase):
         self.assertEqual(list(d.keys()), [Key_C, Key_B, Key_A])
         d.sort(by=lambda k, v: {Key_B: 0, Key_A: 1, Key_C: 2}[k])
         self.assertEqual(list(d.keys()), [Key_B, Key_A, Key_C])
+
 
     def test_open_and_close(self):
         d = MemoryDctn()

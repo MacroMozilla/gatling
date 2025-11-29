@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Literal, Self, Callable, TypeVar
+from dataclasses import MISSING
+from typing import Literal, Self, Callable, TypeVar, Any
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -15,15 +16,11 @@ class BaseDctn(ABC):
         pass
 
     @abstractmethod
-    def update(self, E=None, **F) -> int:
-        pass
-
-    @abstractmethod
-    def get(self, key, default=None):
-        pass
-
-    @abstractmethod
-    def pop(self, key, default=None):
+    def set(self, key, value) -> bool:
+        """Set a key-value pair.
+        Returns:
+            True if key was added, False if key was overwritten.
+        """
         pass
 
     @abstractmethod
@@ -36,6 +33,26 @@ class BaseDctn(ABC):
 
     @abstractmethod
     def __delitem__(self, key):
+        pass
+
+    @abstractmethod
+    def get(self, key, default=MISSING) -> Any:
+        pass
+
+    @abstractmethod
+    def pop(self, key, default=MISSING) -> Any:
+        pass
+
+    @abstractmethod
+    def setmany(self, E=None, **F) -> int:
+        pass
+
+    @abstractmethod
+    def getmany(self, E=None, **F) -> dict:
+        pass
+
+    @abstractmethod
+    def popmany(self, E=None, **F) -> dict:
         pass
 
     @abstractmethod
@@ -92,3 +109,10 @@ class BaseDctn(ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+"""
+
+
+
+"""

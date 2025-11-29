@@ -18,7 +18,7 @@ class TestMemoryDctnStr(DynamicTestCase):
 def testcase_fctn(cand: dict, level):
     md = MemoryDctn()
 
-    md.update(cand)
+    md.setmany(cand)
     sent = md.str(level)
     # sent = str(md)
     print(f"===candidate===[{sizeof(cand)}]")

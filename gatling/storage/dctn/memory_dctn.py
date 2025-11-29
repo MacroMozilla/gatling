@@ -12,29 +12,99 @@ class MemoryDctn(BaseDctn):
     def clear(self):
         self._dctn.clear()
 
-    def update(self, E=None, **F) -> int:
+    def _arg2map(self, E=None, **F) -> dict:
         if E is None:
-            self._dctn.update(F)
-            return len(F)
+            return F
+        if not isinstance(E, dict):
+            E = dict(E)
+        return {**E, **F} if F else E
 
-        if not F:
-            if not isinstance(E, dict):
-                E = dict(E)
-            self._dctn.update(E)
-            return len(E)
+    def _resolve_default(self, key, default):
+        """If default is an Exception class, raise it. Otherwise return default."""
+        if isinstance(default, type) and issubclass(default, Exception):
+            raise default(key)
+        return default
 
-        merged = dict(E, **F)
-        self._dctn.update(merged)
-        return len(merged)
+    def set(self, key, value) -> bool:
+        """Set a key-value pair.
 
-    def get(self, key, default=None):
-        return self._dctn.get(key, default)
+        Returns:
+            True if key was added, False if key was overwritten.
+        """
+        is_new = key not in self._dctn
+        self._dctn[key] = value
+        return is_new
 
-    def pop(self, key, default=None):
-        return self._dctn.pop(key, default)
+    def get(self, key, default=KeyError):
+        """Get value by key.
 
-    def __getitem__(self, item):
-        return self._dctn[item]
+        Args:
+            key: The key to get.
+            default: Default value if key not found. If an Exception class, raises it.
+
+        Returns:
+            The value, or default if key not found.
+        """
+        if key in self._dctn:
+            return self._dctn[key]
+        return self._resolve_default(key, default)
+
+    def pop(self, key, default=KeyError):
+        """Pop value by key.
+
+        Args:
+            key: The key to pop.
+            default: Default value if key not found. If an Exception class, raises it.
+
+        Returns:
+            The value, or default if key not found.
+        """
+        if key in self._dctn:
+            return self._dctn.pop(key)
+        return self._resolve_default(key, default)
+
+    def getmany(self, E=None, **F) -> dict:
+        """Get multiple values.
+
+        Args:
+            E: A dict or iterable of (key, default) pairs.
+            **F: Additional key=default pairs.
+
+        Returns:
+            Dict of {key: value or default}.
+        """
+        mapping = self._arg2map(E, **F)
+        return {k: self.get(k, v) for k, v in mapping.items()}
+
+    def popmany(self, E=None, **F) -> dict:
+        """Pop multiple values.
+
+        Args:
+            E: A dict or iterable of (key, default) pairs.
+            **F: Additional key=default pairs.
+
+        Returns:
+            Dict of {key: value or default}.
+        """
+        mapping = self._arg2map(E, **F)
+        return {k: self.pop(k, v) for k, v in mapping.items()}
+
+    def setmany(self, E=None, **F) -> int:
+        """Set multiple key-value pairs.
+
+        Args:
+            E: A dict or iterable of (key, value) pairs.
+            **F: Additional key=value pairs.
+
+        Returns:
+            Number of keys set.
+        """
+        mapping = self._arg2map(E, **F)
+        self._dctn.update(mapping)
+        return len(mapping)
+
+    def __getitem__(self, key):
+        return self._dctn[key]
 
     def __setitem__(self, key, value):
         self._dctn[key] = value
