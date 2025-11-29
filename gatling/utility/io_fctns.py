@@ -2,7 +2,7 @@ import os
 import pickle
 import tomllib
 import traceback
-from typing import Any, List
+from typing import Any
 
 import orjson
 
