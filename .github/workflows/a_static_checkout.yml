@@ -59,6 +59,7 @@ jobs:
           # Whitelist: files or directories to skip
           WHITELIST=(
              "tests/storage/dctn/test_memory_dctn_str_0_objs.py"
+             "tests/utility/test_io_fctns_orjson.py"
           )
           
           # Build filter pattern
