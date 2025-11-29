@@ -101,7 +101,7 @@ class TestIOFunctions(unittest.TestCase):
     def test_read_json_empty_file(self):
         """Test reading empty file returns None"""
         fpath = os.path.join(self.dpath, 'empty.json')
-        with open(fpath, 'wb') as f:
+        with open(fpath, 'wb') as _:
             pass
 
         result = read_json(fpath)
@@ -274,7 +274,7 @@ class TestIOFunctions(unittest.TestCase):
     def test_read_jsonl_empty_file(self):
         """Test reading empty JSONL file"""
         fpath = os.path.join(self.dpath, 'empty.jsonl')
-        with open(fpath, 'wb') as f:
+        with open(fpath, 'wb') as _:
             pass
 
         result = read_jsonl(fpath)
