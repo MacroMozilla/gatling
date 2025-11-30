@@ -60,7 +60,7 @@ def read_json(filename: str) -> any:
         return None
 
 
-def save_json(data: any, filename: str, indent: bool = False) -> bool:
+def save_json(data: any, filename: str, indent: bool = True) -> bool:
     try:
         with open(filename, 'wb') as f:
             option = orjson.OPT_INDENT_2 if indent else 0
