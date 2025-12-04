@@ -1,14 +1,21 @@
 import unittest
 import os
 import tempfile
-import orjson
 import sys
 from io import StringIO
-from gatling.utility.io_fctns import read_json, save_json, read_jsonl, save_jsonl
+from dataclasses import dataclass
+
+from gatling.utility.io_fctns import save_pickle, read_pickle
 
 
-class TestIOFunctions(unittest.TestCase):
-    """Test read/save functions for JSON and JSONL files"""
+@dataclass
+class Person:
+    name: str
+    age: int
+
+
+class TestPickleFunctions(unittest.TestCase):
+    """Test save_pickle and read_pickle functions"""
 
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
@@ -23,368 +30,188 @@ class TestIOFunctions(unittest.TestCase):
         sys.stderr = self._stderr
         sys.stdout = self._stdout
 
-    # ==================== read_json ====================
-    def test_read_json_simple(self):
-        """Test reading a simple JSON file"""
-        fpath = os.path.join(self.dpath, 'simple.json')
-        data = {'name': 'test', 'value': 123}
-        with open(fpath, 'wb') as f:
-            f.write(orjson.dumps(data))
+    # ==================== Basic Types ====================
+    def test_none(self):
+        fpath = os.path.join(self.dpath, 'none.pkl.zst')
+        save_pickle(None, fpath)
+        self.assertIsNone(read_pickle(fpath))
 
-        result = read_json(fpath)
-        self.assertEqual(result, data)
+    def test_bool(self):
+        fpath = os.path.join(self.dpath, 'bool.pkl.zst')
+        save_pickle(True, fpath)
+        self.assertTrue(read_pickle(fpath))
+        save_pickle(False, fpath)
+        self.assertFalse(read_pickle(fpath))
 
-    def test_read_json_nested(self):
-        """Test reading nested JSON structure"""
-        fpath = os.path.join(self.dpath, 'nested.json')
+    def test_int(self):
+        fpath = os.path.join(self.dpath, 'int.pkl.zst')
+        for val in [0, 1, -1, 42, -9999, 10 ** 100]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_float(self):
+        fpath = os.path.join(self.dpath, 'float.pkl.zst')
+        for val in [0.0, 3.14159, -2.71828, 1e100, float('inf')]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_complex(self):
+        fpath = os.path.join(self.dpath, 'complex.pkl.zst')
+        save_pickle(3 + 4j, fpath)
+        self.assertEqual(read_pickle(fpath), 3 + 4j)
+
+    def test_string(self):
+        fpath = os.path.join(self.dpath, 'string.pkl.zst')
+        for val in ["", "hello", "你好世界 🚀", "x" * 10000]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_bytes(self):
+        fpath = os.path.join(self.dpath, 'bytes.pkl.zst')
+        for val in [b"", b"hello", bytes(range(256)), os.urandom(1000)]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    # ==================== Collections ====================
+    def test_list(self):
+        fpath = os.path.join(self.dpath, 'list.pkl.zst')
+        for val in [[], [1, 2, 3], list(range(1000)), [[1, 2], [3, 4]]]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_tuple(self):
+        fpath = os.path.join(self.dpath, 'tuple.pkl.zst')
+        for val in [(), (1, 2, 3), tuple(range(1000))]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_set(self):
+        fpath = os.path.join(self.dpath, 'set.pkl.zst')
+        for val in [set(), {1, 2, 3}, frozenset([1, 2, 3])]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    def test_dict(self):
+        fpath = os.path.join(self.dpath, 'dict.pkl.zst')
+        for val in [{}, {"a": 1}, {"nested": {"deep": 42}}, {i: i ** 2 for i in range(100)}]:
+            save_pickle(val, fpath)
+            self.assertEqual(read_pickle(fpath), val)
+
+    # ==================== Lambda ====================
+    def test_lambda_simple(self):
+        fpath = os.path.join(self.dpath, 'lambda.pkl.zst')
+        save_pickle(lambda x: x + 1, fpath)
+        self.assertEqual(read_pickle(fpath)(10), 11)
+
+    def test_lambda_multi_args(self):
+        fpath = os.path.join(self.dpath, 'lambda_multi.pkl.zst')
+        save_pickle(lambda x, y, z: x * y + z, fpath)
+        self.assertEqual(read_pickle(fpath)(2, 3, 4), 10)
+
+    def test_lambda_closure(self):
+        fpath = os.path.join(self.dpath, 'lambda_closure.pkl.zst')
+        multiplier = 10
+        save_pickle(lambda x: x * multiplier, fpath)
+        self.assertEqual(read_pickle(fpath)(5), 50)
+
+    def test_lambda_nested(self):
+        fpath = os.path.join(self.dpath, 'lambda_nested.pkl.zst')
+        save_pickle(lambda x: (lambda y: x + y), fpath)
+        self.assertEqual(read_pickle(fpath)(10)(5), 15)
+
+    def test_lambda_in_list(self):
+        fpath = os.path.join(self.dpath, 'lambda_list.pkl.zst')
+        save_pickle([lambda x: x * 2, lambda x: x ** 2], fpath)
+        funcs = read_pickle(fpath)
+        self.assertEqual(funcs[0](3), 6)
+        self.assertEqual(funcs[1](3), 9)
+
+    def test_lambda_in_dict(self):
+        fpath = os.path.join(self.dpath, 'lambda_dict.pkl.zst')
+        save_pickle({"add": lambda a, b: a + b, "mul": lambda a, b: a * b}, fpath)
+        funcs = read_pickle(fpath)
+        self.assertEqual(funcs["add"](2, 3), 5)
+        self.assertEqual(funcs["mul"](2, 3), 6)
+
+    # ==================== Functions ====================
+    def test_function(self):
+        fpath = os.path.join(self.dpath, 'func.pkl.zst')
+
+        def add(a, b):
+            return a + b
+
+        save_pickle(add, fpath)
+        self.assertEqual(read_pickle(fpath)(2, 3), 5)
+
+    def test_recursive_function(self):
+        fpath = os.path.join(self.dpath, 'func_rec.pkl.zst')
+
+        def factorial(n):
+            return 1 if n <= 1 else n * factorial(n - 1)
+
+        save_pickle(factorial, fpath)
+        self.assertEqual(read_pickle(fpath)(5), 120)
+
+    # ==================== Objects ====================
+    def test_dataclass(self):
+        fpath = os.path.join(self.dpath, 'dataclass.pkl.zst')
+        save_pickle(Person("Alice", 30), fpath)
+        result = read_pickle(fpath)
+        self.assertEqual(result.name, "Alice")
+        self.assertEqual(result.age, 30)
+
+    def test_object_list(self):
+        fpath = os.path.join(self.dpath, 'obj_list.pkl.zst')
+        data = [Person(f"User_{i}", 20 + i) for i in range(100)]
+        save_pickle(data, fpath)
+        result = read_pickle(fpath)
+        self.assertEqual(len(result), 100)
+        self.assertEqual(result[0].name, "User_0")
+        self.assertEqual(result[99].age, 119)
+
+    # ==================== Edge Cases ====================
+    def test_circular_reference(self):
+        fpath = os.path.join(self.dpath, 'circular.pkl.zst')
+        data = [1, 2, 3]
+        data.append(data)
+        save_pickle(data, fpath)
+        result = read_pickle(fpath)
+        self.assertEqual(result[:3], [1, 2, 3])
+        self.assertIs(result[3], result)
+
+    def test_mixed_complex(self):
+        fpath = os.path.join(self.dpath, 'mixed.pkl.zst')
         data = {
-            'user': {
-                'name': 'Alice',
-                'address': {'city': 'New York', 'zip': '10001'}
-            },
-            'tags': ['a', 'b', 'c']
+            "users": [Person(f"U{i}", i) for i in range(10)],
+            "transform": lambda x: x * 2,
+            "nested": {"a": {"b": {"c": [1, 2, 3]}}},
         }
-        with open(fpath, 'wb') as f:
-            f.write(orjson.dumps(data))
-
-        result = read_json(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_json_array(self):
-        """Test reading JSON array as root"""
-        fpath = os.path.join(self.dpath, 'array.json')
-        data = [1, 2, 3, {'a': 1}]
-        with open(fpath, 'wb') as f:
-            f.write(orjson.dumps(data))
-
-        result = read_json(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_json_special_types(self):
-        """Test reading JSON with null, bool, numbers"""
-        fpath = os.path.join(self.dpath, 'special.json')
-        data = {'null_val': None, 'bool_true': True, 'bool_false': False, 'float': 3.14, 'negative': -100}
-        with open(fpath, 'wb') as f:
-            f.write(orjson.dumps(data))
-
-        result = read_json(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_json_unicode(self):
-        """Test reading JSON with unicode characters"""
-        fpath = os.path.join(self.dpath, 'unicode.json')
-        data = {'name': 'Alice', 'emoji': '😀🎉', 'chinese': '你好'}
-        with open(fpath, 'wb') as f:
-            f.write(orjson.dumps(data))
-
-        result = read_json(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_json_empty_object(self):
-        """Test reading empty JSON object"""
-        fpath = os.path.join(self.dpath, 'empty_obj.json')
-        with open(fpath, 'wb') as f:
-            f.write(b'{}')
-
-        result = read_json(fpath)
-        self.assertEqual(result, {})
-
-    def test_read_json_empty_array(self):
-        """Test reading empty JSON array"""
-        fpath = os.path.join(self.dpath, 'empty_arr.json')
-        with open(fpath, 'wb') as f:
-            f.write(b'[]')
-
-        result = read_json(fpath)
-        self.assertEqual(result, [])
-
-    def test_read_json_empty_file(self):
-        """Test reading empty file returns None"""
-        fpath = os.path.join(self.dpath, 'empty.json')
-        with open(fpath, 'wb') as _:
-            pass
-
-        result = read_json(fpath)
-        self.assertIsNone(result)
-
-    def test_read_json_invalid(self):
-        """Test reading invalid JSON returns None"""
-        fpath = os.path.join(self.dpath, 'invalid.json')
-        with open(fpath, 'wb') as f:
-            f.write(b'{invalid json}')
-
-        result = read_json(fpath)
-        self.assertIsNone(result)
-
-    def test_read_json_not_found(self):
-        """Test reading non-existent file returns None"""
-        fpath = os.path.join(self.dpath, 'not_exist.json')
-        result = read_json(fpath)
-        self.assertIsNone(result)
-
-    # ==================== save_json ====================
-    def test_save_json_simple(self):
-        """Test saving a simple JSON file"""
-        fpath = os.path.join(self.dpath, 'save_simple.json')
-        data = {'name': 'test', 'value': 456}
-
-        result = save_json(data, fpath)
-        self.assertTrue(result)
-        self.assertTrue(os.path.exists(fpath))
-        self.assertEqual(read_json(fpath), data)
-
-    def test_save_json_nested(self):
-        """Test saving nested JSON structure"""
-        fpath = os.path.join(self.dpath, 'save_nested.json')
-        data = {'level1': {'level2': {'level3': [1, 2, 3]}}}
-
-        result = save_json(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), data)
-
-    def test_save_json_array(self):
-        """Test saving JSON array as root"""
-        fpath = os.path.join(self.dpath, 'save_array.json')
-        data = [{'id': 1}, {'id': 2}]
-
-        result = save_json(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), data)
-
-    def test_save_json_special_types(self):
-        """Test saving JSON with null, bool, numbers"""
-        fpath = os.path.join(self.dpath, 'save_special.json')
-        data = {'null_val': None, 'bool_true': True, 'bool_false': False, 'float': 3.14159, 'negative': -100}
-
-        result = save_json(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), data)
-
-    def test_save_json_unicode(self):
-        """Test saving JSON with unicode characters"""
-        fpath = os.path.join(self.dpath, 'save_unicode.json')
-        data = {'name': 'Bob', 'emoji': '🎉', 'japanese': 'こんにちは'}
-
-        result = save_json(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), data)
-
-    def test_save_json_empty_object(self):
-        """Test saving empty JSON object"""
-        fpath = os.path.join(self.dpath, 'save_empty_obj.json')
-
-        result = save_json({}, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), {})
-
-    def test_save_json_empty_array(self):
-        """Test saving empty JSON array"""
-        fpath = os.path.join(self.dpath, 'save_empty_arr.json')
-
-        result = save_json([], fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_json(fpath), [])
-
-    def test_save_json_indent(self):
-        """Test saving JSON with indentation"""
-        fpath = os.path.join(self.dpath, 'save_indent.json')
-        data = {'a': 1, 'b': 2}
-
-        result = save_json(data, fpath, indent=True)
-        self.assertTrue(result)
-
-        with open(fpath, 'rb') as f:
-            content = f.read()
-        self.assertIn(b'\n', content)
-
-    def test_save_json_overwrite(self):
-        """Test overwriting existing file"""
-        fpath = os.path.join(self.dpath, 'overwrite.json')
-        save_json({'old': 1}, fpath)
-        save_json({'new': 2}, fpath)
-
-        result = read_json(fpath)
-        self.assertEqual(result, {'new': 2})
-
-    def test_save_json_invalid_path(self):
-        """Test saving to invalid path returns False"""
-        fpath = '/invalid_path/no_permission/test.json'
-        result = save_json({'a': 1}, fpath)
-        self.assertFalse(result)
-
-    # ==================== read_jsonl ====================
-    def test_read_jsonl_simple(self):
-        """Test reading a simple JSONL file"""
-        fpath = os.path.join(self.dpath, 'simple.jsonl')
-        data = [{'id': 1}, {'id': 2}, {'id': 3}]
-        with open(fpath, 'wb') as f:
-            f.write(b'\n'.join(orjson.dumps(d) for d in data))
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_jsonl_single_line(self):
-        """Test reading JSONL with single line"""
-        fpath = os.path.join(self.dpath, 'single.jsonl')
-        with open(fpath, 'wb') as f:
-            f.write(b'{"id": 1}')
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, [{'id': 1}])
-
-    def test_read_jsonl_nested(self):
-        """Test reading JSONL with nested objects"""
-        fpath = os.path.join(self.dpath, 'nested.jsonl')
-        data = [{'user': {'name': 'Alice', 'info': {'age': 20}}}, {'user': {'name': 'Bob', 'info': {'age': 30}}}]
-        with open(fpath, 'wb') as f:
-            f.write(b'\n'.join(orjson.dumps(d) for d in data))
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_jsonl_special_types(self):
-        """Test reading JSONL with null, bool, numbers"""
-        fpath = os.path.join(self.dpath, 'special.jsonl')
-        data = [{'val': None}, {'val': True}, {'val': False}, {'val': 3.14}, {'val': -100}]
-        with open(fpath, 'wb') as f:
-            f.write(b'\n'.join(orjson.dumps(d) for d in data))
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_jsonl_unicode(self):
-        """Test reading JSONL with unicode characters"""
-        fpath = os.path.join(self.dpath, 'unicode.jsonl')
-        data = [{'name': 'Alice', 'emoji': '😀'}, {'name': 'Bob', 'chinese': '你好'}]
-        with open(fpath, 'wb') as f:
-            f.write(b'\n'.join(orjson.dumps(d) for d in data))
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, data)
-
-    def test_read_jsonl_empty_lines(self):
-        """Test reading JSONL with empty lines"""
-        fpath = os.path.join(self.dpath, 'empty_lines.jsonl')
-        with open(fpath, 'wb') as f:
-            f.write(b'{"id": 1}\n\n{"id": 2}\n\n')
-
-        result = read_jsonl(fpath)
-        self.assertEqual(len(result), 2)
-
-    def test_read_jsonl_empty_file(self):
-        """Test reading empty JSONL file"""
-        fpath = os.path.join(self.dpath, 'empty.jsonl')
-        with open(fpath, 'wb') as _:
-            pass
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, [])
-
-    def test_read_jsonl_partial_invalid(self):
-        """Test reading JSONL with some invalid lines"""
-        fpath = os.path.join(self.dpath, 'partial_invalid.jsonl')
-        with open(fpath, 'wb') as f:
-            f.write(b'{"id": 1}\n{invalid}\n{"id": 3}')
-
-        result = read_jsonl(fpath)
-        self.assertEqual(len(result), 2)
-
-    def test_read_jsonl_many_lines(self):
-        """Test reading JSONL with many lines"""
-        fpath = os.path.join(self.dpath, 'many.jsonl')
-        data = [{'id': i} for i in range(1000)]
-        with open(fpath, 'wb') as f:
-            f.write(b'\n'.join(orjson.dumps(d) for d in data))
-
-        result = read_jsonl(fpath)
-        self.assertEqual(len(result), 1000)
-        self.assertEqual(result[0], {'id': 0})
-        self.assertEqual(result[-1], {'id': 999})
-
-    def test_read_jsonl_not_found(self):
-        """Test reading non-existent JSONL returns empty list"""
-        fpath = os.path.join(self.dpath, 'not_exist.jsonl')
-        result = read_jsonl(fpath)
-        self.assertEqual(result, [])
-
-    # ==================== save_jsonl ====================
-    def test_save_jsonl_simple(self):
-        """Test saving a simple JSONL file"""
-        fpath = os.path.join(self.dpath, 'save_simple.jsonl')
-        data = [{'id': 1}, {'id': 2}, {'id': 3}]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertTrue(os.path.exists(fpath))
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_single_item(self):
-        """Test saving JSONL with single item"""
-        fpath = os.path.join(self.dpath, 'save_single.jsonl')
-        data = [{'id': 1}]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_nested(self):
-        """Test saving JSONL with nested objects"""
-        fpath = os.path.join(self.dpath, 'save_nested.jsonl')
-        data = [{'user': {'info': {'age': 20}}}, {'user': {'info': {'age': 30}}}]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_special_types(self):
-        """Test saving JSONL with null, bool, numbers"""
-        fpath = os.path.join(self.dpath, 'save_special.jsonl')
-        data = [{'val': None}, {'val': True}, {'val': False}, {'val': -99.99}]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_unicode(self):
-        """Test saving JSONL with unicode characters"""
-        fpath = os.path.join(self.dpath, 'save_unicode.jsonl')
-        data = [{'name': 'Charlie', 'korean': '안녕하세요'}, {'name': 'Diana', 'emoji': '🚀'}]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_empty(self):
-        """Test saving empty JSONL"""
-        fpath = os.path.join(self.dpath, 'save_empty.jsonl')
-
-        result = save_jsonl([], fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), [])
-
-    def test_save_jsonl_many_items(self):
-        """Test saving JSONL with many items"""
-        fpath = os.path.join(self.dpath, 'save_many.jsonl')
-        data = [{'id': i, 'value': f'item_{i}'} for i in range(1000)]
-
-        result = save_jsonl(data, fpath)
-        self.assertTrue(result)
-        self.assertEqual(read_jsonl(fpath), data)
-
-    def test_save_jsonl_overwrite(self):
-        """Test overwriting existing JSONL file"""
-        fpath = os.path.join(self.dpath, 'overwrite.jsonl')
-        save_jsonl([{'old': 1}], fpath)
-        save_jsonl([{'new': 2}], fpath)
-
-        result = read_jsonl(fpath)
-        self.assertEqual(result, [{'new': 2}])
-
-    def test_save_jsonl_invalid_path(self):
-        """Test saving to invalid path returns False"""
-        fpath = '/invalid_path/no_permission/test.jsonl'
-        result = save_jsonl([{'a': 1}], fpath)
-        self.assertFalse(result)
+        save_pickle(data, fpath)
+        result = read_pickle(fpath)
+        self.assertEqual(len(result["users"]), 10)
+        self.assertEqual(result["transform"](5), 10)
+        self.assertEqual(result["nested"]["a"]["b"]["c"], [1, 2, 3])
+
+    # ==================== Compression Levels ====================
+    def test_compression_levels(self):
+        fpath = os.path.join(self.dpath, 'level.pkl.zst')
+        data = list(range(10000))
+        for level in [1, 3, 6, 9, 12, 19]:
+            save_pickle(data, fpath, level=level)
+            self.assertEqual(read_pickle(fpath), data)
+
+    # ==================== Large Data ====================
+    def test_large_list(self):
+        fpath = os.path.join(self.dpath, 'large_list.pkl.zst')
+        data = list(range(100000))
+        save_pickle(data, fpath)
+        self.assertEqual(read_pickle(fpath), data)
+
+    def test_large_dict(self):
+        fpath = os.path.join(self.dpath, 'large_dict.pkl.zst')
+        data = {f"key_{i}": {"val": i, "data": list(range(10))} for i in range(1000)}
+        save_pickle(data, fpath)
+        self.assertEqual(read_pickle(fpath), data)
 
 
 if __name__ == '__main__':

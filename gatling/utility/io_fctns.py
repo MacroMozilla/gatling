@@ -1,10 +1,10 @@
 import os
-import pickle
 import tomllib
 import traceback
 from typing import Any
-
 import orjson
+import dill
+import zstandard as zstd
 
 
 def read_jsonl(filename: str) -> list:
@@ -84,15 +84,36 @@ def read_text(filename: str) -> str:
         return file.read()
 
 
-def save_pickle(data: Any, filename: str) -> None:
-    with open(filename, 'wb') as file:
-        pickle.dump(data, file)
+def save_pickle(data: Any, filename: str, level: int = 3) -> None:
+    """
+    Save Python object with dill and Zstandard compression.
+
+    Zstandard compression level:
+        - 1–3  : Fast compression speed, lower compression ratio
+        - 4–6  : Balanced performance (recommended)
+        - 7–12 : Higher compression ratio, slower speed
+        - >12  : Maximum compression, very slow (for archiving)
+    """
+    cctx = zstd.ZstdCompressor(level=level)
+    with open(filename, "wb") as f:
+        with cctx.stream_writer(f) as compressor:
+            dill.dump(data, compressor)
 
 
 def read_pickle(filename: str) -> Any:
-    with open(filename, 'rb') as file:
-        return pickle.load(file)
-
+    """Load Python object saved with dill and Zstandard compression."""
+    try:
+        dctx = zstd.ZstdDecompressor()
+        with open(filename, "rb") as f:
+            with dctx.stream_reader(f) as reader:
+                return dill.load(reader)
+    except Exception as e:
+        raise RuntimeError(
+            f"Error reading pickle file: {e}\n"
+            "Please upgrade to the latest version of gatling:\n"
+            "  pip install --upgrade gatling-py\n"
+            "Then re-save the pickle file with save_pickle() and try again."
+        ) from e
 
 def save_bytes(data: bytes, filename: str, mode: str = 'wb') -> None:
     with open(filename, mode) as file:
