@@ -2,7 +2,6 @@ import unittest
 import os
 import tempfile
 import time
-import sys
 from typing import Any
 
 from gatling.utility.io_fctns import save_pickle, read_pickle
