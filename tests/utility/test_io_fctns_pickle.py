@@ -98,6 +98,12 @@ class TestPickleFunctions(unittest.TestCase):
 
         return loaded
 
+    def test_file_not_found(self):
+        """Test reading non-existent file raises FileNotFoundError."""
+        fpath = os.path.join(self.dpath, 'not_exist.pkl.zst')
+        with self.assertRaises(FileNotFoundError):
+            read_pickle(fpath)
+
     # ==================== Basic Types ====================
     def test_none(self):
         """Test None value."""

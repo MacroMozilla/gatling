@@ -10,7 +10,6 @@ import zstandard as zstd
 def read_jsonl(filename: str) -> list:
     try:
         with open(filename, 'rb') as f:
-
             data = []
             for i, line in enumerate(f, 1):
                 if line:
@@ -21,7 +20,8 @@ def read_jsonl(filename: str) -> list:
                         print(f"[Error] Content: {line[:200]}")
                         print(f"[Error] File: {filename}")
             return data
-
+    except FileNotFoundError:
+        raise FileNotFoundError(f"JSONL file not found: {filename}")
     except Exception as e:
         print(f"[Error] Failed to read: {filename}")
         print(f"[Error] {e}")
@@ -47,6 +47,8 @@ def read_json(filename: str) -> any:
         with open(filename, 'rb') as f:
             content = f.read()
             return orjson.loads(content)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"JSON file not found: {filename}")
     except orjson.JSONDecodeError as e:
         print(f"[Error] Failed to parse: {filename}")
         print(f"[Error] {e}")
@@ -80,8 +82,13 @@ def save_text(data: str, filename: str, mode='w') -> None:
 
 
 def read_text(filename: str) -> str:
-    with open(filename, 'r', encoding='utf-8') as file:
-        return file.read()
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            return file.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Text file not found: {filename}")
+    except Exception as e:
+        raise RuntimeError(f"Error reading text file: {filename}") from e
 
 
 def save_pickle(data: Any, filename: str, level: int = 3) -> None:
@@ -107,6 +114,8 @@ def read_pickle(filename: str) -> Any:
         with open(filename, "rb") as f:
             with dctx.stream_reader(f) as reader:
                 return dill.load(reader)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Pickle file not found: {filename}")
     except Exception as e:
         raise RuntimeError(
             f"Error reading pickle file: {e}\n"
@@ -115,19 +124,30 @@ def read_pickle(filename: str) -> Any:
             "Then re-save the pickle file with save_pickle() and try again."
         ) from e
 
+
 def save_bytes(data: bytes, filename: str, mode: str = 'wb') -> None:
     with open(filename, mode) as file:
         file.write(data)
 
 
 def read_bytes(filename: str, mode: str = 'rb') -> bytes:
-    with open(filename, mode) as file:
-        return file.read()
+    try:
+        with open(filename, mode) as file:
+            return file.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {filename}")
+    except Exception as e:
+        raise RuntimeError(f"Error reading file: {filename}") from e
 
 
 def read_toml(file_path: str) -> dict:
-    with open(file_path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(file_path, "rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"TOML file not found: {file_path}")
+    except Exception as e:
+        raise RuntimeError(f"Error reading TOML file: {file_path}") from e
 
 
 def remove_file(fname):
