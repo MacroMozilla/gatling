@@ -1,12 +1,11 @@
 import os
 import tempfile
 import unittest
-from gatling.utility.xprint import printi
 from gatling.storage.g_table.file_table_ao import FileTableAO, KEY_IDX
-from gatling.utility.error_tools import FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileAlreadyOpenedForWriteError, FileNotOpenError
+from gatling.utility.error_tools import FileAlreadyOpenedError, FileAlreadyOpenedForWriteError
 from gatling.utility.rand_tools import (
     rand_bool, rand_uint8, rand_int32, rand_float_01, rand_float_pos,
-    rand_float_any, rand_float_inf, rand_float_nan, rand_name_zh,
+    rand_float_any, rand_float_inf, rand_name_zh,
     rand_name_en, rand_url, rand_ip, rand_username, rand_password,
     rand_fpath, rand_date, rand_time, rand_datetime
 )

@@ -1,5 +1,5 @@
 import io
-from typing import TextIO, BinaryIO
+from typing import BinaryIO
 
 
 def goto_head(file):

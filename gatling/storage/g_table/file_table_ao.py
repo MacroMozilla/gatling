@@ -2,7 +2,7 @@ import datetime
 from typing import Optional, IO, Any, BinaryIO, Literal
 import traceback
 from gatling.storage.g_table.base_table import BaseTableAO
-from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, goto_head, goto_offset, get_pos, set_pos
+from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos
 from gatling.utility.error_tools import FileAlreadyOpenedForWriteError, FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileNotOpenError
 from gatling.utility.io_fctns import remove_file
 
@@ -56,12 +56,12 @@ def sent2head(sent):
     try:
         return {k: sent_2_keytype[v] for k, v in (item.rsplit('.', 1) for item in sent.split('\t'))}
     except ValueError as e:
-        print(f"Error parsing (rsplit failed): {sent!r}")
+        print(f"{e} error parsing (rsplit failed): {sent!r}")
 
         print(traceback.format_exc())
         raise
     except KeyError as e:
-        print(f"Error parsing (unknown keytype {e}): {sent!r}")
+        print(f"{e} error parsing (unknown keytype {e}): {sent!r}")
         print(traceback.format_exc())
         raise
 
