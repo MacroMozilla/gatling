@@ -1,3 +1,5 @@
+import traceback
+
 import pkg_resources
 import os
 
@@ -15,9 +17,11 @@ for pkg in pkg_resources.working_set:
 
         if os.path.isdir(pkg_path):
             size = sum(os.path.getsize(os.path.join(dp, f))
-                      for dp, dn, fn in os.walk(pkg_path) for f in fn)
+                       for dp, dn, fn in os.walk(pkg_path) for f in fn)
             packages.append((pkg.project_name, size))
-    except:
+    except Exception as e:
+        print(traceback.format_exc())
+        print(e)
         pass
 
 packages.sort(key=lambda x: -x[1])
@@ -26,14 +30,14 @@ total = sum(p[1] for p in packages)
 print(f"{'Package':<35} {'Size':>12} {'Percent':>10}")
 print('-' * 60)
 for name, size in packages:
-    if size > 1024*1024:
-        s = f"{size/1024/1024:.2f} MB"
+    if size > 1024 * 1024:
+        s = f"{size / 1024 / 1024:.2f} MB"
     elif size > 1024:
-        s = f"{size/1024:.2f} KB"
+        s = f"{size / 1024:.2f} KB"
     else:
         s = f"{size} B"
-    pct = size/total*100 if total else 0
+    pct = size / total * 100 if total else 0
     print(f"{name:<35} {s:>12} {pct:>9.2f}%")
 
 print('-' * 60)
-print(f"{'TOTAL':<35} {total/1024/1024:>9.2f} MB")
+print(f"{'TOTAL':<35} {total / 1024 / 1024:>9.2f} MB")
