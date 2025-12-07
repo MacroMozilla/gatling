@@ -278,7 +278,7 @@ if __name__ == '__main__':
     # # printi(ft.get_last_row())
     #
     # item = {
-    #     'name': '张三',
+    #     'name': 'Harry Mozilla',
     #     'age': 25,
     #     'score': 98.5,
     #     'active': True,
