@@ -5,6 +5,7 @@ from gatling.storage.g_table.base_table import BaseTableAO
 from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos
 from gatling.utility.error_tools import FileAlreadyOpenedForWriteError, FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileNotOpenError
 from gatling.utility.io_fctns import remove_file
+from dataclasses import dataclass
 
 keytype_to_sent = {
     str: str,
@@ -37,8 +38,6 @@ sent_2_keytype = {
 }
 
 KEY_IDX = "*"
-
-from dataclasses import dataclass
 
 
 @dataclass
@@ -103,7 +102,7 @@ class FileTableAO(BaseTableAO):
         if key2type is None:
             key2type = self.get_key2type()
         with open(self.fpath, 'rb') as f:
-            head = readline_forward(f)
+            _ = readline_forward(f) # skip head
 
             first_sent = readline_forward(f).decode()
             if first_sent == '':
