@@ -295,7 +295,7 @@ if __name__ == '__main__':
     # printi('#######')
     #
     # item = {
-    #     'name': '李明',
+    #     'name': 'Bunny Mozilla',
     #     'age': 32,
     #     'score': 87.3,
     #     'active': False,

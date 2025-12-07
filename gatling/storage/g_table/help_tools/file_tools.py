@@ -95,7 +95,7 @@ if __name__ == '__main__':
     extend_lines(file, [b'line1', b'line2', b'line3'])
     append_line(file, b'line4')
 
-    # 测试 forward
+    # test forward
     printi('--- Forward ---')
     goto_head(file)
     printi(readline_forward(file))
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     printi(readline_forward(file))
     printi(readline_forward(file))
 
-    # # # 测试 backward
+    # test backward
     printi('--- Backward ---')
     goto_tail(file)
     printi(readline_backward(file, chunk_size=1))
@@ -114,10 +114,10 @@ if __name__ == '__main__':
     printi(readline_backward(file, chunk_size=1))
 
     #
-    # # 测试 extend
+    # test extend
     # print('--- Extend ---')
     # extend_lines(f, ['line4', 'line5'])
     #
-    # # 验证
+    # validation
     # goto_head(f)
     # print(f.read())
