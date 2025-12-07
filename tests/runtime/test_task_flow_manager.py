@@ -1,7 +1,7 @@
 import unittest
 
 from gatling.runtime.taskflow_manager import TaskFlowManager
-from gatling.storage.queue.memory_queue import MemoryQueue
+from gatling.storage.g_queue.memory_queue import MemoryQueue
 from gatling.vtasks.sample_tasks import fake_fctn_cpu, fake_iter_cpu, fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net
 from helper.dynamic_testcase import DynamicTestCase
 

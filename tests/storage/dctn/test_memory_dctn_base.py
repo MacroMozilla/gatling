@@ -1,6 +1,6 @@
 import unittest
 
-from gatling.storage.dctn.memory_dctn import MemoryDctn
+from gatling.storage.g_dctn.memory_dctn import MemoryDctn
 
 Key_A = "A"
 Key_B = "B"

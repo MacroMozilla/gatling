@@ -1,5 +1,5 @@
 import queue
-from gatling.storage.queue.base_queue import BaseQueue
+from gatling.storage.g_queue.base_queue import BaseQueue
 
 
 class MemoryQueue(BaseQueue):

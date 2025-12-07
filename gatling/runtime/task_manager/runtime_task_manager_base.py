@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import Callable, Any
 from abc import ABC, abstractmethod
 
-from gatling.storage.queue.base_queue import BaseQueue
+from gatling.storage.g_queue.base_queue import BaseQueue
 from gatling.utility.xprint import check_picklable
 
 

@@ -14,8 +14,8 @@ from gatling.runtime.task_manager.runtime_task_manager_thread_function import Ru
 from gatling.runtime.task_manager.runtime_task_manager_thread_iterator import RuntimeTaskManagerThreadIterator
 from gatling.runtime.task_manager.runtime_task_manager_coroutine_function import RuntimeTaskManagerCoroutineFunction
 from gatling.runtime.task_manager.runtime_task_manager_coroutine_iterator import RuntimeTaskManagerCoroutineIterator
-from gatling.storage.queue.base_queue import BaseQueue
-from gatling.storage.queue.memory_queue import MemoryQueue
+from gatling.storage.g_queue.base_queue import BaseQueue
+from gatling.storage.g_queue.memory_queue import MemoryQueue
 
 from gatling.utility.watch import Watch
 from gatling.utility.xprint import check_globals_pickable, print_flush, print_none

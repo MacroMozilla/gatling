@@ -1,6 +1,6 @@
 from typing import Literal, Self, Callable
 
-from gatling.storage.dctn.base_dctn import BaseDctn, K, V
+from gatling.storage.g_dctn.base_dctn import BaseDctn, K, V
 from gatling.utility.xstr import dumps_hard, dumps_soft
 
 

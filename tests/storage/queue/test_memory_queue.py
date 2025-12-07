@@ -1,7 +1,7 @@
 import unittest
 import threading
 from queue import Empty, Full
-from gatling.storage.queue.memory_queue import MemoryQueue
+from gatling.storage.g_queue.memory_queue import MemoryQueue
 
 Item_A = "A"
 Item_B = "B"

@@ -8,8 +8,8 @@ from concurrent.futures import Future
 from typing import Callable, Any
 
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
-from gatling.storage.queue.base_queue import BaseQueue
-from gatling.storage.queue.memory_queue import MemoryQueue
+from gatling.storage.g_queue.base_queue import BaseQueue
+from gatling.storage.g_queue.memory_queue import MemoryQueue
 from gatling.utility.xprint import print_flush, check_picklable
 
 

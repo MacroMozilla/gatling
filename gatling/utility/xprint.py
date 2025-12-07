@@ -2,6 +2,7 @@ import pickle
 import types
 
 from tqdm import tqdm
+from icecream import ic as printi
 
 
 def print_box(box):
@@ -49,3 +50,7 @@ def check_globals_pickable():
 if __name__ == '__main__':
     pass
     check_globals_pickable()
+
+    x = 1
+    printi.configureOutput(includeContext=True)
+    printi(x)

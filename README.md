@@ -32,7 +32,7 @@ A hybrid **process + thread + coroutine** manager that can run both sync and asy
 
 ```python
 from gatling.runtime.taskflow_manager import TaskFlowManager
-from gatling.storage.queue.memory_queue import MemoryQueue
+from gatling.storage import MemoryQueue
 from gatling.utility.xprint import check_globals_pickable
 from gatling.vtasks.sample_tasks import fake_iter_disk, fake_fctn_disk, async_fake_iter_net, async_fake_fctn_net, fake_fctn_cpu, fake_iter_cpu
 
