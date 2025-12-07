@@ -2,6 +2,8 @@ name: Static Checkout ♻
 
 on:
   push:
+    branches:
+      - master
     paths:
       - '.github/**'
       - 'gatling/**'
@@ -10,6 +12,8 @@ on:
       - 'requirements.txt'
 
   pull_request:
+    branches:
+      - master
     paths:
       - '.github/**'
       - 'gatling/**'
