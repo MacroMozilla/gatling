@@ -65,6 +65,7 @@ def sent2head(sent):
         print(traceback.format_exc())
         raise
 
+
 def row2sent(row, key2type):
     return '\t'.join(keytype_to_sent[ktype](row[kname]) for kname, ktype in key2type.items())
 
@@ -95,7 +96,7 @@ class FileTableAO(BaseTableAO):
             key2type = sent2head(readline_forward(f).decode())
         return key2type
 
-    def get_first_row(self,key2type = None):
+    def get_first_row(self, key2type=None):
         target_file = self.state.file
         if target_file is not None and is_write_mode(target_file):
             raise FileAlreadyOpenedForWriteError(f'{self.fpath} is already opened with write permission.')
@@ -108,9 +109,9 @@ class FileTableAO(BaseTableAO):
             if first_sent == '':
                 return {}
             else:
-                return sent2row(first_sent,key2type )
+                return sent2row(first_sent, key2type)
 
-    def get_last_row(self,key2type=None):
+    def get_last_row(self, key2type=None):
         target_file = self.state.file
         if target_file is not None and is_write_mode(target_file):
             raise FileAlreadyOpenedForWriteError(f'{self.fpath} is already opened with write permission.')

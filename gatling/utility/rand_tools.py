@@ -39,8 +39,8 @@ rand_fname = lambda: fake_en.file_name()  # document.pdf
 rand_fpath = lambda: fake_en.file_path()  # /home/user/doc.pdf
 
 rand_date = lambda: fake_en.date_object()  # 2023-05-15
-rand_time = lambda: fake_en.time_object()  # 14:30:25
-rand_datetime = lambda: fake_en.date_time()  # datetime object
+rand_time = lambda: fake_en.time_object().replace(microsecond=0)  # 14:30:25
+rand_datetime = lambda: fake_en.date_time().replace(microsecond=0)  # datetime object
 
 if __name__ == '__main__':
     pass

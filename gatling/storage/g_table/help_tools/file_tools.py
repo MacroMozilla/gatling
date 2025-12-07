@@ -84,7 +84,6 @@ def popout(file):
     return res
 
 
-# 测试
 if __name__ == '__main__':
     from gatling.utility.xprint import printi
 
