@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import threading
 import time
 from contextlib import contextmanager
 from datetime import timedelta
@@ -49,6 +50,7 @@ class TaskFlowManager:
         self.retry_on_error = retry_on_error
         self.retry_empty_interval = retry_empty_interval
         self.errlogfctn = errlogfctn
+        self.running = False
 
     def print_rtm(self, msg):
         print(f"==={msg}===" * 128)
@@ -121,10 +123,12 @@ class TaskFlowManager:
         self.before_start_record()
         for rtm in self.runtime_task_manager_s:
             rtm.start(rtm.worker)
+        self.running = True
 
     def stop(self):
         for rtm in self.runtime_task_manager_s:
             rtm.stop()
+        self.running = False
 
     @contextmanager
     def execute(self, log_interval=1):
@@ -132,6 +136,7 @@ class TaskFlowManager:
             yield self
             self.start()
             self.await_print(log_interval=log_interval)
+
         finally:
             self.stop()
 
@@ -173,24 +178,35 @@ class TaskFlowManager:
             sent += f" => {str(tfm)}"
         return sent
 
+    def pack(self, logfctn=print):
+        speedinfo = self.get_speedinfo()
+
+        cost = speedinfo[K_cost]
+        speed = speedinfo[K_speed]
+        srate = speedinfo[K_srate]
+        remain = speedinfo[K_remain]
+
+        sent = f"[{cost}] remain={remain} {speed:.1f} iter/sec {srate=:.2f} {self}"
+        logfctn(sent)
+
     def await_print(self, log_interval=1.0, logfctn=print):
 
-        def pack():
-            speedinfo = self.get_speedinfo()
-
-            cost = speedinfo[K_cost]
-            speed = speedinfo[K_speed]
-            srate = speedinfo[K_srate]
-            remain = speedinfo[K_remain]
-
-            sent = f"[{cost}] remain={remain} {speed:.1f} iter/sec {srate=:.2f} {self}"
-            logfctn(sent)
-
         while not self.check_done():
-            pack()
+            self.pack(logfctn=logfctn)
             time.sleep(log_interval)
-        pack()
+        self.pack(logfctn=logfctn)
         logfctn("DONE !!!")
+
+    def block_while_print(self, log_interval=1.0, logfctn=print):
+        while self.running:
+            self.pack(logfctn=logfctn)
+            time.sleep(log_interval)
+        self.pack(logfctn=logfctn)
+        logfctn("DONE !!!")
+
+    def while_print(self, log_interval=1.0, logfctn=print):
+        t = threading.Thread(target=self.block_while_print, args=(log_interval, logfctn), daemon=True)
+        t.start()
 
     def get_qdone(self):
         return self.done_queue
@@ -206,7 +222,7 @@ if __name__ == '__main__':
 
     # ---------- Build and run the pipeline ----------
     check_globals_pickable()
-    if True:
+    if False:
 
         q_wait = MemoryQueue()
 
@@ -230,7 +246,7 @@ if __name__ == '__main__':
         q_done = tfm.get_qdone()
         results = list(q_done)
         print(f"\n=== Final Results ({len(results)})===")
-    if True:
+    if False:
         q_wait = MemoryQueue()
 
         # for i in range(10):
@@ -253,3 +269,28 @@ if __name__ == '__main__':
         q_done = tfm.get_qdone()
         results = list(q_done)
         print(f"\n=== Final Results ({len(results)})===")
+
+    if True:
+        q_wait = MemoryQueue()
+
+        # for i in range(10):
+        #     q_wait.put(i + 1)
+
+        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=print_none)
+
+        tfm.register_process(errr_fctn_cpu, worker=2)
+        tfm.register_thread(errr_fctn_disk, worker=2)
+        tfm.register_coroutine(async_errr_fctn_net, worker=5)
+
+        tfm.register_process(errr_iter_cpu, worker=2)
+        tfm.register_thread(errr_iter_disk, worker=2)
+        tfm.register_coroutine(async_errr_iter_net, worker=2)
+        tfm.start()
+        tfm.while_print(log_interval=1)
+
+        for i in range(10):
+            q_wait.put(i + 1)
+
+        # q_done = tfm.get_qdone()
+        # results = list(q_done)
+        # print(f"\n=== Final Results ({len(results)})===")
