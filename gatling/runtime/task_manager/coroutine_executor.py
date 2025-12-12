@@ -12,8 +12,13 @@ class CoroutineExecutor():
         self.coroutine_tasks = []
 
     def submit(self, loop_func, *args, **kwargs):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        try:
+            loop = asyncio.get_running_loop()
+            use_existing_loop = True
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            use_existing_loop = False
 
 
         async def main():
@@ -21,6 +26,8 @@ class CoroutineExecutor():
             self.coroutine_tasks.extend(tasks)
             await asyncio.gather(*tasks, return_exceptions=True)
 
+        if use_existing_loop:
+            return loop.create_task(main())
         try:
             loop.run_until_complete(main())
         except Exception:

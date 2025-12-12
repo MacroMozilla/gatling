@@ -207,6 +207,7 @@ class TaskFlowManager:
     def while_print(self, log_interval=1.0, logfctn=print):
         t = threading.Thread(target=self.block_while_print, args=(log_interval, logfctn), daemon=True)
         t.start()
+        return t
 
     def get_qdone(self):
         return self.done_queue
@@ -286,7 +287,7 @@ if __name__ == '__main__':
         tfm.register_thread(errr_iter_disk, worker=2)
         tfm.register_coroutine(async_errr_iter_net, worker=2)
         tfm.start()
-        tfm.while_print(log_interval=1)
+        while_t = tfm.while_print(log_interval=1)
 
         for i in range(10):
             q_wait.put(i + 1)
