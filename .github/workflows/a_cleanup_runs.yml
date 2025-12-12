@@ -1,12 +1,8 @@
-name: Cleanup Runs
+name: Cleanup Runs ✋
 
 on:
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for cleanup'
-        required: true
-        default: 'Manual cleanup'
+
 
 jobs:
   cleanup:

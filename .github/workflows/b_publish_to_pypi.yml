@@ -1,17 +1,13 @@
-name: Publish To PYPI
-
-on:
-  workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for publish'
-        required: true
-        default: 'Manual publish'
+name: Publish To PYPI ✋
 
 permissions:
   actions: write
   contents: read
   security-events: write
+
+
+on:
+  workflow_dispatch:
 
 
 jobs:
