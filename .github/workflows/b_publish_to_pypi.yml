@@ -1,4 +1,4 @@
-name: Publish To PYPI ✋
+name: Publish To PYPI
 
 on:
   workflow_dispatch:
