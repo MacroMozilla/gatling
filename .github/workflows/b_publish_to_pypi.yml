@@ -2,6 +2,11 @@ name: Publish To PYPI ✋
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for publish'
+        required: true
+        default: 'Manual publish'
 
 permissions:
   actions: write
