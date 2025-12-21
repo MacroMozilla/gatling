@@ -43,6 +43,8 @@ jobs:
 
       - name: Debug encoding
         run: |
+          echo "=== Encoding ==="
+          file --mime-encoding "$GITHUB_WORKSPACE/requirements.txt"
           echo "=== File type ==="
           file "$GITHUB_WORKSPACE/requirements.txt"
           echo "=== First 20 bytes (hex) ==="
@@ -52,8 +54,7 @@ jobs:
 
       - name: Fix requirements.txt Encoding
         run: |
-          iconv -f utf-8 -t utf-8 "$GITHUB_WORKSPACE/requirements.txt" -o "$GITHUB_WORKSPACE/requirements_fixed.txt"
-           mv "$GITHUB_WORKSPACE/requirements_fixed.txt" "$GITHUB_WORKSPACE/requirements.txt"
+          sed -i '1s/^\xEF\xBB\xBF//' "$GITHUB_WORKSPACE/requirements.txt"
 
       - name: Install build backend
         run: |
