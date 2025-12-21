@@ -1,6 +1,7 @@
 import datetime
-from typing import Optional, IO, Any, BinaryIO, Literal
 import traceback
+from dataclasses import dataclass
+from typing import Optional, IO, Any, BinaryIO, Literal
 
 import ciso8601
 
@@ -9,7 +10,6 @@ from gatling.storage.g_table.help_tools.file_tools import readline_forward, appe
 from gatling.storage.g_table.help_tools.slice_tools import Slice
 from gatling.utility.error_tools import FileAlreadyOpenedForWriteError, FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileNotOpenError
 from gatling.utility.io_fctns import remove_file
-from dataclasses import dataclass
 
 
 def is_write_mode(file: IO) -> bool:
@@ -456,8 +456,8 @@ class TableAO_FileTSV(BaseTableAO):
 if __name__ == '__main__':
     pass
 
-    from gatling.utility.xprint import printi, print_rows
-    from a_const_debug import fpath_temp_tsv, const_key2type, row1, row2, rows, rows_extra
+    from gatling.utility.xprint import printi
+    from a_const_debug import fpath_temp_tsv, const_key2type, row1, row2, rows
 
     ft = TableAO_FileTSV(fpath_temp_tsv)
     ft.clear()

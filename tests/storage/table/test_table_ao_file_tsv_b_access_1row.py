@@ -1,11 +1,8 @@
-import os
-import tempfile
 import unittest
-from itertools import combinations
 
-from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV, KEY_IDX
 from gatling.storage.g_table.help_tools.slice_tools import Slice
-from storage.table.a_const_test import const_key2type, rand_row, const_keys, filterbykeys, rows2cols, const_keys_extra
+from gatling.storage.g_table.table_ao_file_tsv import KEY_IDX
+from storage.table.a_const_test import rand_row
 from storage.table.abstract_test_table_ao_file_tsv_b_access_0base import AbsctractTestFileTableAccess0Row
 
 s = Slice

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from gatling.utility.xprint import print_rows
 
-
 const_key2type = {
     'name': str,
     'age': int,

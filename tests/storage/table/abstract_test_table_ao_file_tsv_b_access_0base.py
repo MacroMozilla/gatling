@@ -1,11 +1,10 @@
 import os
 import tempfile
 import unittest
-from abc import ABC, abstractmethod
+from abc import ABC
 from itertools import combinations
 
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
-
 from storage.table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols, const_keys_extra
 
 
