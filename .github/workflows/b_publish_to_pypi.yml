@@ -43,7 +43,8 @@ jobs:
 
       - name: Fix requirements.txt Encoding
         run: |
-          python $GITHUB_WORKSPACE/fix_rq_encoding.py
+          iconv -f utf-8 -t utf-8 "$GITHUB_WORKSPACE/requirements.txt" -o "$GITHUB_WORKSPACE/requirements_fixed.txt"
+           mv "$GITHUB_WORKSPACE/requirements_fixed.txt" "$GITHUB_WORKSPACE/requirements.txt"
 
       - name: Install build backend
         run: |
