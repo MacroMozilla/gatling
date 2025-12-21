@@ -1,25 +1,26 @@
 name: Static Checkout ♻
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.github/**'
-      - 'gatling/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - 'requirements.txt'
-
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '.github/**'
-      - 'gatling/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - 'requirements.txt'
+  workflow_dispatch:
+  #  push:
+  #    branches:
+  #      - master
+  #    paths:
+  #      - '.github/**'
+  #      - 'gatling/**'
+  #      - 'tests/**'
+  #      - 'pyproject.toml'
+  #      - 'requirements.txt'
+  #
+  #  pull_request:
+  #    branches:
+  #      - master
+  #    paths:
+  #      - '.github/**'
+  #      - 'gatling/**'
+  #      - 'tests/**'
+  #      - 'pyproject.toml'
+  #      - 'requirements.txt'
 
 permissions:
   actions: write

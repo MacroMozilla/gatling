@@ -41,6 +41,15 @@ jobs:
         with:
           python-version: "3.11.9"
 
+      - name: Debug encoding
+        run: |
+          echo "=== File type ==="
+          file "$GITHUB_WORKSPACE/requirements.txt"
+          echo "=== First 20 bytes (hex) ==="
+          xxd "$GITHUB_WORKSPACE/requirements.txt" | head -3
+          echo "=== File size ==="
+          wc -c "$GITHUB_WORKSPACE/requirements.txt"
+
       - name: Fix requirements.txt Encoding
         run: |
           iconv -f utf-8 -t utf-8 "$GITHUB_WORKSPACE/requirements.txt" -o "$GITHUB_WORKSPACE/requirements_fixed.txt"
