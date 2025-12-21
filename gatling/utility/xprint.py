@@ -5,7 +5,7 @@ from tqdm import tqdm
 from icecream import ic as printi
 
 
-def print_box(box):
+def print_rows(box):
     for i, item in enumerate(box):
         print(i, item)
 

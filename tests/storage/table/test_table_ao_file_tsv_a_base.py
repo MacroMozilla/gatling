@@ -1,58 +1,12 @@
 import os
 import tempfile
 import unittest
-from gatling.storage.g_table.file_table_ao import FileTableAO, KEY_IDX
+from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV, KEY_IDX
 from gatling.utility.error_tools import FileAlreadyOpenedError, FileAlreadyOpenedForWriteError
-from gatling.utility.rand_tools import (
-    rand_bool, rand_uint8, rand_int32, rand_float_01, rand_float_pos,
-    rand_float_any, rand_float_inf, rand_name_zh,
-    rand_name_en, rand_url, rand_ip, rand_username, rand_password,
-    rand_fpath, rand_date, rand_time, rand_datetime
-)
-
-const_key2rand = {
-    # str - account
-    'account': rand_username,
-    'secret': rand_password,
-
-    # bool
-    'is_active': rand_bool,
-
-    # int
-    'level': rand_uint8,
-    'balance': rand_int32,
-
-    # float
-    'progress': rand_float_01,
-    'price': rand_float_pos,
-    'temperature': rand_float_any,
-    'threshold_inf': rand_float_inf,
-
-    # str - name
-    'nickname_zh': rand_name_zh,
-    'nickname_en': rand_name_en,
-
-    # str - network
-    'homepage': rand_url,
-    'ip_address': rand_ip,
-
-    # str - path
-    'save_path': rand_fpath,
-
-    # datetime
-    'birthday': rand_date,
-    'alarm': rand_time,
-    'created_at': rand_datetime,
-}
-
-const_key2type = {key: type(rf()) for key, rf in const_key2rand.items()}
+from storage.table.a_const_test import const_key2type, rand_row
 
 
-def rand_row():
-    return {key: rf() for key, rf in const_key2rand.items()}
-
-
-class TestFileTable(unittest.TestCase):
+class TestFileTableBase(unittest.TestCase):
     """Unit tests for TestFileTable class."""
 
     def setUp(self):
@@ -66,22 +20,22 @@ class TestFileTable(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_00_nofile_x_getkey(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_key2type()
 
     def test_01_nofile_x_getfirstrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_first_row()
 
     def test_02_nofile_x_getlastrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_last_row()
 
     def test_10_initialized_x_getkey(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
 
         key2type_extra = {KEY_IDX: int, **const_key2type}
@@ -89,17 +43,17 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(list(ft.get_key2type().keys()), list(key2type_extra.keys()))
 
     def test_11_initialized_x_getfirstrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         self.assertEqual(ft.get_first_row(), {})
 
     def test_12_initialized_x_getlastrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         self.assertEqual(ft.get_last_row(), {})
 
     def test_20_row1_x_getkey(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -108,7 +62,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(list(ft.get_key2type().keys()), list(key2type_extra.keys()))
 
     def test_21_row1_x_getfirstrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -116,7 +70,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_first_row(), row0_extra)
 
     def test_22_row1_x_getlastrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -124,7 +78,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row0_extra)
 
     def test_30_row2_x_getkey(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         row1 = rand_row()
@@ -136,7 +90,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(list(ft.get_key2type().keys()), list(key2type_extra.keys()))
 
     def test_31_row2_x_getfirstrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -147,7 +101,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_first_row(), row0_extra)
 
     def test_32_row2_x_getlastrow(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -157,7 +111,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row1_extra)
 
     def test_40_clear(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -166,7 +120,7 @@ class TestFileTable(unittest.TestCase):
             ft.get_key2type()
 
     def test_50_ctxt_errr_get_key2type(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -176,7 +130,7 @@ class TestFileTable(unittest.TestCase):
                 _ = ft.get_key2type()
 
     def test_51_ctxt_errr_get_first_row(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -186,7 +140,7 @@ class TestFileTable(unittest.TestCase):
                 _ = ft.get_first_row()
 
     def test_52_ctxt_errr_get_last_row(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -196,7 +150,7 @@ class TestFileTable(unittest.TestCase):
                 _ = ft.get_last_row()
 
     def test_52_ctxt_errr_clear(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -206,7 +160,7 @@ class TestFileTable(unittest.TestCase):
                 ft.clear()
 
     def test_53_ctxt_errr_initialize(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -216,7 +170,7 @@ class TestFileTable(unittest.TestCase):
                 ft.initialize(key2type=const_key2type)
 
     def test_53_ctxt_errr_build_state(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -226,7 +180,7 @@ class TestFileTable(unittest.TestCase):
                 ft._build_state()
 
     def test_54_ctxt_errr_enter(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.append(row0)
@@ -237,7 +191,7 @@ class TestFileTable(unittest.TestCase):
                     pass
 
     def test_60_row0_ctxt_append(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         with ft:
             pass
@@ -246,7 +200,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), {})
 
     def test_61_row1_ctxt_append(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         with ft:
@@ -257,7 +211,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row0_extra)
 
     def test_62_row2_ctxt_append(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         row1 = rand_row()
@@ -271,7 +225,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row1_extra)
 
     def test_70_row0_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         ft.extend([])
 
@@ -279,7 +233,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), {})
 
     def test_71_row1_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         ft.extend([row0])
@@ -289,7 +243,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row0_extra)
 
     def test_72_row2_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         row1 = rand_row()
@@ -301,7 +255,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row1_extra)
 
     def test_70_row0_ctxt_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         with ft:
             ft.extend([])
@@ -310,7 +264,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), {})
 
     def test_71_row1_ctxt_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         with ft:
@@ -321,7 +275,7 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_last_row(), row0_extra)
 
     def test_72_row2_ctxt_extend(self):
-        ft = FileTableAO(self.test_fname)
+        ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
         row0 = rand_row()
         row1 = rand_row()
@@ -333,9 +287,43 @@ class TestFileTable(unittest.TestCase):
         self.assertEqual(ft.get_first_row(), row0_extra)
         self.assertEqual(ft.get_last_row(), row1_extra)
 
-    # keys()
-    # len()
-    # col()
+    def test_80_0_getitem(self):
+        # case : no file
+        ft = TableAO_FileTSV(self.test_fname)
+        with self.assertRaises(FileNotFoundError):
+            _ = ft[:]
+
+    def test_80_1_getitem(self):
+        # case : no file
+        ft = TableAO_FileTSV(self.test_fname)
+        with self.assertRaises(FileNotFoundError):
+            _ = ft.rows()
+
+    def test_80_2_getitem(self):
+        # case : no file
+        ft = TableAO_FileTSV(self.test_fname)
+        with self.assertRaises(FileNotFoundError):
+            _ = ft.cols()
+
+    def test_81_0_getitem(self):
+        # case : empty file
+        ft = TableAO_FileTSV(self.test_fname).initialize(key2type=const_key2type)
+
+        res = ft[:]
+        self.assertEqual(res, [])
+
+    def test_81_1_getitem(self):
+        # case : empty file
+        ft = TableAO_FileTSV(self.test_fname).initialize(key2type=const_key2type)
+        res = ft.rows()
+        self.assertEqual(res, [])
+
+    def test_81_2_getitem(self):
+        # case : empty file
+        ft = TableAO_FileTSV(self.test_fname).initialize(key2type=const_key2type)
+        res = ft.cols()
+        const_keys_extra = [KEY_IDX, *const_key2type.keys()]
+        self.assertEqual(res, {k: [] for k in const_keys_extra})
 
 
 if __name__ == "__main__":
