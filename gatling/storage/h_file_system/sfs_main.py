@@ -18,7 +18,7 @@ class SuperFileSystem:
         self.dbname: str = dbname
 
         if self.__class__.dpath_root is None:
-            raise ValueError(f"SuperFileSystem not configured. Call SuperFileSystem.config(dpath_root) with a valid directory path.")
+            raise ValueError("SuperFileSystem not configured. Call SuperFileSystem.config(dpath_root) with a valid directory path.")
 
         self.dpath_root_dbname: str = os.path.join(self.__class__.dpath_root, self.dbname)
         os.makedirs(self.dpath_root_dbname, exist_ok=True)
