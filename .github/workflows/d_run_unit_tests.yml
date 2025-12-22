@@ -2,22 +2,22 @@ name: Run Unit Tests ♻
 
 on:
   workflow_dispatch:
-  #  push:
-  #    branches: [ master ]
-  #    paths:
-  #      - '.github/**'
-  #      - 'gatling/**'
-  #      - 'tests/**'
-  #      - 'pyproject.toml'
-  #      - 'requirements.txt'
-  #  pull_request:
-  #    branches: [ master ]
-  #    paths:
-  #      - '.github/**'
-  #      - 'gatling/**'
-  #      - 'tests/**'
-  #      - 'pyproject.toml'
-  #      - 'requirements.txt'
+  push:
+    branches: [ master ]
+    paths:
+      - '.github/**'
+      - 'gatling/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '.github/**'
+      - 'gatling/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
 
 
 permissions:
