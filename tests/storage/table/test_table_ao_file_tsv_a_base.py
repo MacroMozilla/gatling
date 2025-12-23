@@ -24,33 +24,39 @@ class TestFileTableBase(unittest.TestCase):
         ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_key2type()
+        self.assertFalse(ft.exists())
 
     def test_01_nofile_x_getfirstrow(self):
         ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_first_row()
+        self.assertFalse(ft.exists())
 
     def test_02_nofile_x_getlastrow(self):
         ft = TableAO_FileTSV(self.test_fname)
         with self.assertRaises(FileNotFoundError):
             ft.get_last_row()
+        self.assertFalse(ft.exists())
 
     def test_10_initialized_x_getkey(self):
         ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
 
         key2type_extra = {KEY_IDX: int, **const_key2type}
+        self.assertTrue(ft.exists())
         self.assertEqual(ft.get_key2type(), key2type_extra)
         self.assertEqual(list(ft.get_key2type().keys()), list(key2type_extra.keys()))
 
     def test_11_initialized_x_getfirstrow(self):
         ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
+        self.assertTrue(ft.exists())
         self.assertEqual(ft.get_first_row(), {})
 
     def test_12_initialized_x_getlastrow(self):
         ft = TableAO_FileTSV(self.test_fname)
         ft.initialize(key2type=const_key2type)
+        self.assertTrue(ft.exists())
         self.assertEqual(ft.get_last_row(), {})
 
     def test_20_row1_x_getkey(self):

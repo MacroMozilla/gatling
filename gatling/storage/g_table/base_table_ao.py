@@ -52,6 +52,10 @@ class BaseTableAO():
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    @abstractmethod
+    def exists(self) -> bool:
+        pass
+
 
 if __name__ == '__main__':
     pass

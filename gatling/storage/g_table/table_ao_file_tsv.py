@@ -1,4 +1,5 @@
 import datetime
+import os
 import traceback
 from dataclasses import dataclass
 from typing import Optional, IO, Any, BinaryIO, Literal
@@ -452,6 +453,8 @@ class TableAO_FileTSV(BaseTableAO):
     def cols(self, keys=None, idxs=Slice[::]):
         return self[idxs, keys, sent2flat]
 
+    def exists(self) -> bool:
+        return os.path.exists(self.fpath)
 
 if __name__ == '__main__':
     pass
