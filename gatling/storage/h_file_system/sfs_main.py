@@ -29,27 +29,33 @@ class SuperFileSystem:
 
         print(f"Create SFS-database at {self.dpath_root_dbname}")
 
-    def delete(self, force: bool = False):
+    def delete(self, force: bool = False) -> bool:
         if not force:
             confirm = input(f"Are you sure you want to delete all data at {self.dpath_root_dbname}? (confirm/no): ")
             if confirm.lower().strip() != 'confirm':
                 print("Deletion aborted.")
-                return
+                return False
         shutil.rmtree(self.dpath_root_dbname)
+        return True
 
-    def exists(self, dirname: str):
+    def exists(self, dirname: str) -> bool:
         subpaths = self.path_router(dirname)
         dpath = os.path.join(self.dpath_root_dbname, *subpaths, dirname)
         return os.path.exists(dpath)
 
-    def mkdir(self, dirname: str):
+    def mkdir(self, dirname: str) -> str:
         check_safe(dirname)
         subpaths = self.path_router(dirname)
         dpath = os.path.join(self.dpath_root_dbname, *subpaths, dirname)
-        os.makedirs(dpath, exist_ok=True)
-        print(f"Created directory at {dpath}")
+        if os.path.exists(dpath):
+            print(f"Directory already exists at {dpath}")
 
-    def rmdir(self, dirname: str):
+        else:
+            os.makedirs(dpath, exist_ok=True)
+            print(f"Created directory at {dpath}")
+        return dpath
+
+    def rmdir(self, dirname: str) -> bool:
         check_safe(dirname)
         subpaths = self.path_router(dirname)
         dpath_root_dbname_subpaths = os.path.join(self.dpath_root_dbname, *subpaths)
@@ -63,16 +69,18 @@ class SuperFileSystem:
                     os.rmdir(current)
                 else:
                     break
+            return True
         else:
             print(f"No directory at {dpath}")
+            return False
 
     def list_files(self):
         pattern = '/'.join(['*'] * (len(self.path_router) + 1))
-        return [f.name for f in Path(self.dpath_root_dbname).glob(pattern) if f.is_file()]
+        return {f.name for f in Path(self.dpath_root_dbname).glob(pattern) if f.is_file()}
 
     def list_dirs(self):
         pattern = '/'.join(['*'] * (len(self.path_router) + 1))
-        return [f.name for f in Path(self.dpath_root_dbname).glob(pattern) if f.is_dir()]
+        return {f.name for f in Path(self.dpath_root_dbname).glob(pattern) if f.is_dir()}
 
 
 if __name__ == "__main__":
@@ -91,3 +99,6 @@ if __name__ == "__main__":
     sfsb.mkdir('test1')
     sfsb.mkdir('test2')
     sfsb.mkdir('test3')
+
+    sfst.delete()
+    sfsb.delete()

@@ -5,10 +5,11 @@ from abc import ABC
 from itertools import combinations
 
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
+from helper.abstract_testcase import ConditionalTestSkipMeta
 from storage.table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols, const_keys_extra
 
 
-class AbsctractTestFileTableAccess0Row(ABC):
+class AbstractTestFileTableAccess0Row(ABC, unittest.TestCase, metaclass=ConditionalTestSkipMeta):
     """Unit tests for TestFileTable class."""
 
     const_local_error: list
@@ -30,6 +31,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
         self.temp_dir.cleanup()
 
     def test_getitem_00_index_error(self):
+
         for idx in self.const_local_error:
             with self.subTest(idx=idx, msg='get\t'):
                 with self.assertRaises(IndexError):
@@ -42,6 +44,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     _ = self.ft.cols(None, idx)
 
     def test_getitem_01_index(self):
+
         for idx in self.const_local_index:
             with self.subTest(idx=idx, msg='get'):
                 self.assertEqual(self.ft[idx], self.rows[idx])
@@ -51,6 +54,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                 self.assertEqual(self.ft.cols(None, idx), self.rows[idx])
 
     def test_getitem_02_index_1key(self):
+
         for idx in self.const_local_index:
             for key in const_keys:
                 with self.subTest(idx=idx, key=key, msg='get'):
@@ -61,6 +65,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(key, idx), filterbykeys(self.rows[idx], [key]))
 
     def test_getitem_03_index_2key(self):
+
         for idx in self.const_local_index:
             for tpkeys in combinations(const_keys, 2):
                 keys = list(tpkeys)
@@ -72,6 +77,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(keys, idx), filterbykeys(self.rows[idx], keys))
 
     def test_getitem_04_slice(self):
+
         for slc in self.const_local_slices:
             with self.subTest(slc=slc, msg='get'):
                 self.assertEqual(self.ft[slc], self.rows[slc])
@@ -81,6 +87,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                 self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys_extra))
 
     def test_getitem_05_slice_1key(self):
+
         for slc in self.const_local_slices:
             for key in const_keys:
                 with self.subTest(slc=slc, key=key, msg='get'):
@@ -91,6 +98,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(key, slc), rows2cols(filterbykeys(self.rows[slc], [key]), keys=[key]))
 
     def test_getitem_06_slice_2key(self):
+
         for slc in self.const_local_slices:
             for tpkeys in combinations(const_keys, 2):
                 keys = list(tpkeys)
@@ -102,6 +110,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(keys, slc), rows2cols(filterbykeys(self.rows[slc], keys), keys=keys))
 
     def test_getitem_ctxt_10_index_error(self):
+
         for idx in self.const_local_error:
             with self.subTest(idx=idx, msg='get\t'):
                 with self.assertRaises(IndexError):
@@ -117,6 +126,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                         _ = self.ft.cols(None, idx)
 
     def test_getitem_ctxt_11_index(self):
+
         for idx in self.const_local_index:
             with self.subTest(idx=idx, msg='get'):
                 with self.ft:
@@ -129,6 +139,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(None, idx), self.rows[idx])
 
     def test_getitem_ctxt_12_index_1key(self):
+
         for idx in self.const_local_index:
             for key in const_keys:
                 with self.subTest(idx=idx, key=key, msg='get'):
@@ -142,6 +153,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                         self.assertEqual(self.ft.cols(key, idx), filterbykeys(self.rows[idx], [key]))
 
     def test_getitem_ctxt_13_index_2key(self):
+
         for idx in self.const_local_index:
             for tpkeys in combinations(const_keys, 2):
                 keys = list(tpkeys)
@@ -156,6 +168,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                         self.assertEqual(self.ft.cols(keys, idx), filterbykeys(self.rows[idx], keys))
 
     def test_getitem_ctxt_14_slice(self):
+
         for slc in self.const_local_slices:
             with self.subTest(slc=slc, msg='get'):
                 with self.ft:
@@ -168,6 +181,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys_extra))
 
     def test_getitem_ctxt_15_slice_1key(self):
+
         for slc in self.const_local_slices:
             for key in const_keys:
                 with self.subTest(slc=slc, key=key, msg='get'):
@@ -181,6 +195,7 @@ class AbsctractTestFileTableAccess0Row(ABC):
                         self.assertEqual(self.ft.cols(key, slc), rows2cols(filterbykeys(self.rows[slc], [key]), keys=[key]))
 
     def test_getitem_ctxt_16_slice_2key(self):
+
         for slc in self.const_local_slices:
             for tpkeys in combinations(const_keys, 2):
                 keys = list(tpkeys)
@@ -194,6 +209,9 @@ class AbsctractTestFileTableAccess0Row(ABC):
                     with self.ft:
                         self.assertEqual(self.ft.cols(keys, slc), rows2cols(filterbykeys(self.rows[slc], keys), keys=keys))
 
+    __unittest_skip__ = True
+    __unittest_skip_why__ = "Abstract TestCase"
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+    pass

@@ -2,13 +2,14 @@ import unittest
 
 from gatling.storage.g_table.help_tools.slice_tools import Slice
 from gatling.storage.g_table.table_ao_file_tsv import KEY_IDX
+from helper.abstract_testcase import ConditionalTestSkipMeta
 from storage.table.a_const_test import rand_row
-from storage.table.abstract_test_table_ao_file_tsv_b_access_0base import AbsctractTestFileTableAccess0Row
+from storage.table.abstract_test_table_ao_file_tsv_access_base import AbstractTestFileTableAccess0Row
 
 s = Slice
 
 
-class TestFileTableAccess5Row(AbsctractTestFileTableAccess0Row, unittest.TestCase):
+class TestFileTableAccess5Row(AbstractTestFileTableAccess0Row, metaclass=ConditionalTestSkipMeta):
     """Unit tests for TestFileTable class."""
     const_local_error = [5, -6]
     const_local_index = [0, 1, 2, 3, 4, -1, -2, -3, -4, -5]
@@ -30,7 +31,8 @@ class TestFileTableAccess5Row(AbsctractTestFileTableAccess0Row, unittest.TestCas
                           ]
 
     def setUp(self):
-        AbsctractTestFileTableAccess0Row.setUp(self)
+        print(self.__class__.__name__)
+        AbstractTestFileTableAccess0Row.setUp(self)
         for idx in range(5):
             row = rand_row()
             row_extra = {KEY_IDX: idx, **row}
