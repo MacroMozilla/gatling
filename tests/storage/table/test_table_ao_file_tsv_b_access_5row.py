@@ -1,7 +1,6 @@
 import unittest
 
 from gatling.storage.g_table.help_tools.slice_tools import Slice
-from gatling.storage.g_table.table_ao_file_tsv import KEY_IDX
 from helper.abstract_testcase import ConditionalTestSkipMeta
 from storage.table.a_const_test import rand_row
 from storage.table.abstract_test_table_ao_file_tsv_access_base import AbstractTestFileTableAccess0Row
@@ -35,9 +34,9 @@ class TestFileTableAccess5Row(AbstractTestFileTableAccess0Row, metaclass=Conditi
         AbstractTestFileTableAccess0Row.setUp(self)
         for idx in range(5):
             row = rand_row()
-            row_extra = {KEY_IDX: idx, **row}
-            self.ft.append(row_extra)
-            self.rows.append(row_extra)
+
+            self.ft.append(row)
+            self.rows.append(row)
 
 
 if __name__ == "__main__":

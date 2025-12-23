@@ -6,7 +6,7 @@ from itertools import combinations
 
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
 from helper.abstract_testcase import ConditionalTestSkipMeta
-from storage.table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols, const_keys_extra
+from storage.table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols
 
 
 class AbstractTestFileTableAccess0Row(ABC, unittest.TestCase, metaclass=ConditionalTestSkipMeta):
@@ -84,7 +84,7 @@ class AbstractTestFileTableAccess0Row(ABC, unittest.TestCase, metaclass=Conditio
             with self.subTest(slc=slc, msg='row'):
                 self.assertEqual(self.ft.rows(slc), self.rows[slc])
             with self.subTest(slc=slc, msg='col'):
-                self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys_extra))
+                self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys))
 
     def test_getitem_05_slice_1key(self):
 
@@ -178,7 +178,7 @@ class AbstractTestFileTableAccess0Row(ABC, unittest.TestCase, metaclass=Conditio
                     self.assertEqual(self.ft.rows(slc), self.rows[slc])
             with self.subTest(slc=slc, msg='col'):
                 with self.ft:
-                    self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys_extra))
+                    self.assertEqual(self.ft.cols(None, slc), rows2cols(self.rows[slc], keys=const_keys))
 
     def test_getitem_ctxt_15_slice_1key(self):
 

@@ -329,8 +329,8 @@ class TestFileTableBase(unittest.TestCase):
         # case : empty file
         ft = TableAO_FileTSV(self.test_fname).initialize(key2type=const_key2type)
         res = ft.cols()
-        const_keys_extra = [KEY_IDX, *const_key2type.keys()]
-        self.assertEqual(res, {k: [] for k in const_keys_extra})
+        const_keys = [*const_key2type.keys()]
+        self.assertEqual(res, {k: [] for k in const_keys})
 
 
 if __name__ == "__main__":

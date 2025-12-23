@@ -103,7 +103,7 @@ def sent2flat(sent, key2type, key2idx=None):
 def get_key2idx(keys, key2type):
     key2idx = None
     if keys is None:
-        default_key2idx = {kname: i for i, kname in enumerate(key2type.keys())}
+        default_key2idx = {kname: i for i, kname in enumerate(key2type.keys()) if kname != KEY_IDX}
         return default_key2idx
     elif isinstance(keys, str):
         keys_all = list(key2type.keys())
@@ -455,6 +455,7 @@ class TableAO_FileTSV(BaseTableAO):
 
     def exists(self) -> bool:
         return os.path.exists(self.fpath)
+
 
 if __name__ == '__main__':
     pass
