@@ -389,9 +389,9 @@ class TableAO_FileTSV(BaseTableAO):
     def extend(self, rows)->'TableAO_FileTSV':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
-            if len(rows) == 0:
-                return
             try:
+                if len(rows) == 0:
+                    return self
                 start_idx = temp_state.next_idx
                 extend_lines(temp_state.file, [
                     row2sent({KEY_IDX: start_idx + i, **row}, temp_state.key2type).encode()
@@ -403,7 +403,7 @@ class TableAO_FileTSV(BaseTableAO):
         else:
             cur_state = self.state
             if len(rows) == 0:
-                return
+                return self
             cur_pos = get_pos(cur_state.file)
             goto_tail(cur_state.file)
             start_idx = cur_state.next_idx
@@ -419,9 +419,11 @@ class TableAO_FileTSV(BaseTableAO):
     def keys(self)->list:
         if self.state.file is None:
             temp_state = self._build_state(open_mode='rb')
-            res_key2type = temp_state.key2type.keys()
-            self._clean_state(temp_state)
-            return list(res_key2type)
+            try:
+                return list(temp_state.key2type.keys())
+            finally:
+                self._clean_state(temp_state)
+
         else:
             return list(self.state.key2type.keys())
 
@@ -429,8 +431,10 @@ class TableAO_FileTSV(BaseTableAO):
         if self.state.file is None:
             temp_state = self._build_state(open_mode='rb')
             res_len = temp_state.next_idx
-            return res_len
-
+            try:
+                return res_len
+            finally:
+                self._clean_state(temp_state)
         else:
             return self.state.next_idx
 
