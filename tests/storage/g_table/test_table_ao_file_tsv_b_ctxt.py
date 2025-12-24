@@ -57,12 +57,6 @@ class TestFileTableBase(SubTestCase):
         return [row0, row1]
 
     def setUp(self):
-        """Create a temporary directory and test file path before each test."""
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
-        print(f"Test file path: {self.test_fname}")
-        self.ft = TableAO_FileTSV(self.test_fname)
-
         self.preruns_0row = [self.prerun_0row_trivial, self.prerun_0row_extend]
         self.preruns_1row = [self.prerun_1row_append, self.prerun_1row_extend]
         self.preruns_2row = [self.prerun_2row_append_link,
@@ -75,36 +69,46 @@ class TestFileTableBase(SubTestCase):
         self.preruns = self.preruns_0row + self.preruns_1row + self.preruns_2row
 
     def tearDown(self):
+        pass
+
+    def subSetUp(self):
+        """Create a temporary directory and test file path before each test."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
+        print(f"Test file path: {self.test_fname}")
+        self.ft = TableAO_FileTSV(self.test_fname)
+
+    def subTearDown(self):
         """Clean up temporary directory after each test."""
         self.temp_dir.cleanup()
 
-
-
     def test_nofile_x_ctxt(self):
-        with self.assertRaises(FileNotFoundError):
-            with self.ft:
-                pass
-
-    def test_init_x_ctxt_init(self):
-        self.ft.initialize(key2type=const_key2type)
-        with self.ft:
-            with self.assertRaises(FileAlreadyOpenedError):
-                self.ft.initialize(key2type=const_key2type_extra)
-
-    def test_init_x_ctxt_build_state(self):
-        self.ft.initialize(key2type=const_key2type)
-        with self.ft:
-            with self.assertRaises(FileAlreadyOpenedForWriteError):
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
                 with self.ft:
                     pass
 
+    def test_init_x_ctxt_init(self):
+        with self.subTestCase():
+            self.ft.initialize(key2type=const_key2type)
+            with self.ft:
+                with self.assertRaises(FileAlreadyOpenedError):
+                    self.ft.initialize(key2type=const_key2type_extra)
+
+    def test_init_x_ctxt_build_state(self):
+        with self.subTestCase():
+            self.ft.initialize(key2type=const_key2type)
+            with self.ft:
+                with self.assertRaises(FileAlreadyOpenedForWriteError):
+                    with self.ft:
+                        pass
+
     def test_init_x_clean_state(self):
-        self.ft.initialize(key2type=const_key2type)
+        with self.subTestCase():
+            self.ft.initialize(key2type=const_key2type)
 
-        with self.assertRaises(FileNotOpenError):
-            self.ft._clean_state(self.ft.state)
-
-
+            with self.assertRaises(FileNotOpenError):
+                self.ft._clean_state(self.ft.state)
 
     def test_prerun_x_getkey(self):
 
@@ -147,7 +151,6 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_exists(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-
                 self.assertFalse(self.ft.exists())
                 self.ft.initialize(key2type=const_key2type)
                 self.assertTrue(self.ft.exists())
@@ -155,12 +158,9 @@ class TestFileTableBase(SubTestCase):
                 with self.ft:
                     self.assertTrue(self.ft.exists())
 
-
     def test_prerun_x_delete(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-
-
                 self.assertFalse(self.ft.exists())
 
                 self.ft.initialize(key2type=const_key2type)
@@ -173,8 +173,6 @@ class TestFileTableBase(SubTestCase):
                         self.ft.delete()
                 # check not deleted
                 self.assertTrue(self.ft.exists())
-
-
 
     def test_prerun_x_clear(self):
         for prerun in self.preruns:

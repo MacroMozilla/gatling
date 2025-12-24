@@ -7,7 +7,7 @@ from gatling.storage.g_sfs.sfs_main import SuperFileSystem
 from gatling.ztest.subtestcase import SubTestCase
 
 
-class AbstractgTestSFS(SubTestCase):
+class TestSFS(SubTestCase):
 
     def prerun_sfs_trivial(self):
         self.sfs = SuperFileSystem(dbname='test_db', path_router=PathRouterTrivial())
@@ -16,13 +16,19 @@ class AbstractgTestSFS(SubTestCase):
         self.sfs = SuperFileSystem(dbname='test_db', path_router=PathRouterBranch())
 
     def setUp(self):
+        self.preruns = [self.prerun_sfs_trivial, self.prerun_sfs_branch]
+
+    def tearDown(self):
+        pass
+
+    def subSetUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
 
         SuperFileSystem.config(dpath_root=self.temp_dir.name)
         self.sfs: Optional[SuperFileSystem] = None
-        self.preruns = [self.prerun_sfs_trivial, self.prerun_sfs_branch]
 
-    def tearDown(self):
+
+    def subTearDown(self):
         pass
         self.temp_dir.cleanup()
 

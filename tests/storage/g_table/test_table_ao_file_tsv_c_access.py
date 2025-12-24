@@ -57,6 +57,12 @@ class TestFileTableAccess(SubTestCase):
             self.rows.append(row)
 
     def setUp(self):
+        self.preruns = [self.prerun_1row, self.prerun_5rows]
+
+    def tearDown(self):
+        pass
+
+    def subSetUp(self):
         """Create a temporary directory and test file path before each test."""
 
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -70,9 +76,9 @@ class TestFileTableAccess(SubTestCase):
         self.const_local_index = []
         self.const_local_slices = []
 
-        self.preruns = [self.prerun_1row, self.prerun_5rows]
 
-    def tearDown(self):
+
+    def subTearDown(self):
         """Clean up temporary directory after each test."""
         self.temp_dir.cleanup()
 

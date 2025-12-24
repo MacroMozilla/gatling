@@ -56,12 +56,6 @@ class TestFileTableBase(SubTestCase):
         return [row0, row1]
 
     def setUp(self):
-        """Create a temporary directory and test file path before each test."""
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
-        print(f"Test file path: {self.test_fname}")
-        self.ft = TableAO_FileTSV(self.test_fname)
-
         self.preruns_0row = [self.prerun_0row_trivial, self.prerun_0row_extend]
         self.preruns_1row = [self.prerun_1row_append, self.prerun_1row_extend]
         self.preruns_2row = [self.prerun_2row_append_link,
@@ -73,89 +67,110 @@ class TestFileTableBase(SubTestCase):
 
         self.preruns = self.preruns_0row + self.preruns_1row + self.preruns_2row
 
-    def tearDown(self):
+    def TearDown(self):
+        pass
+
+    def subSetUp(self):
+        """Create a temporary directory and test file path before each test."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
+        print(f"Test file path: {self.test_fname}")
+        self.ft = TableAO_FileTSV(self.test_fname)
+
+    def subTearDown(self):
         """Clean up temporary directory after each test."""
         self.temp_dir.cleanup()
 
-
     def test_nofile_x_getkey(self):
-        with self.assertRaises(FileNotFoundError):
-            self.ft.get_key2type()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                self.ft.get_key2type()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_getfirstrow(self):
-        with self.assertRaises(FileNotFoundError):
-            self.ft.get_first_row()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                self.ft.get_first_row()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_getlastrow(self):
-        with self.assertRaises(FileNotFoundError):
-            self.ft.get_last_row()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                self.ft.get_last_row()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_exists(self):
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_delete_allow(self):
-        self.assertFalse(self.ft.exists())
-        self.ft.delete()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            self.assertFalse(self.ft.exists())
+            self.ft.delete()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_clear(self):
-        self.assertFalse(self.ft.exists())
-        with self.assertRaises(FileNotFoundError):
-            self.ft.clear()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            self.assertFalse(self.ft.exists())
+            with self.assertRaises(FileNotFoundError):
+                self.ft.clear()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_prerun(self):
         for prerun in self.preruns_notrivial:
             with self.subTestCase(prerun=prerun.__name__):
-
                 self.assertFalse(self.ft.exists())
                 with self.assertRaises(FileNotFoundError):
                     _ = prerun()
                 self.assertFalse(self.ft.exists())
 
-
     def test_nofile_x_keys(self):
-        with self.assertRaises(FileNotFoundError):
-            self.ft.keys()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                self.ft.keys()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_len(self):
-        with self.assertRaises(FileNotFoundError):
-            len(self.ft)
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                len(self.ft)
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_getitem(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft[:]
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft[:]
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_rows(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft.rows()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft.rows()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_cols(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft.cols()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft.cols()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_pop(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft.pop()
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft.pop()
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_shrink1(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft.shrink(1)
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft.shrink(1)
+            self.assertFalse(self.ft.exists())
 
     def test_nofile_x_shrink2(self):
-        with self.assertRaises(FileNotFoundError):
-            _ = self.ft.shrink(2)
-        self.assertFalse(self.ft.exists())
+        with self.subTestCase():
+            with self.assertRaises(FileNotFoundError):
+                _ = self.ft.shrink(2)
+            self.assertFalse(self.ft.exists())
 
     def test_prerun_x_getkey(self):
 
@@ -192,19 +207,15 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_exists(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-
                 self.assertFalse(self.ft.exists())
                 self.ft.initialize(key2type=const_key2type)
                 self.assertTrue(self.ft.exists())
                 _ = prerun()
                 self.assertTrue(self.ft.exists())
 
-
     def test_prerun_x_delete(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-
-
                 self.assertFalse(self.ft.exists())
 
                 self.ft.initialize(key2type=const_key2type)
@@ -216,12 +227,9 @@ class TestFileTableBase(SubTestCase):
                 self.ft.delete()
                 self.assertFalse(self.ft.exists())
 
-
-
     def test_prerun_x_clear(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-
                 self.assertFalse(self.ft.exists())
 
                 self.ft.initialize(key2type=const_key2type)
