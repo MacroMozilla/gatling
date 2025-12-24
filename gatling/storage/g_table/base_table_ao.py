@@ -15,6 +15,10 @@ class BaseTableAO():
         pass
 
     @abstractmethod
+    def delete(self):
+        pass
+
+    @abstractmethod
     def clear(self):
         pass
 
@@ -54,6 +58,14 @@ class BaseTableAO():
 
     @abstractmethod
     def exists(self) -> bool:
+        pass
+
+    @abstractmethod
+    def pop(self) -> dict:
+        pass
+
+    @abstractmethod
+    def shrink(self, n: int) -> list:
         pass
 
 

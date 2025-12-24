@@ -4,7 +4,7 @@ from pathlib import Path
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
 from gatling.utility.io_fctns import save_jsonl, read_jsonl, remove_file, save_pickle, read_pickle
 from gatling.utility.watch import Watch
-from storage.table.a_const_test import rand_row, const_key2type
+from storage.g_table.a_const_test import rand_row, const_key2type
 
 if __name__ == '__main__':
     pass

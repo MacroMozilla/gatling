@@ -7,7 +7,7 @@ from typing import Optional, IO, Any, BinaryIO, Literal
 import ciso8601
 
 from gatling.storage.g_table.base_table_ao import BaseTableAO
-from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head
+from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head, truncate, popout
 from gatling.storage.g_table.help_tools.slice_tools import Slice
 from gatling.utility.error_tools import FileAlreadyOpenedForWriteError, FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileNotOpenError
 from gatling.utility.io_fctns import remove_file
@@ -265,13 +265,8 @@ class TableAO_FileTSV(BaseTableAO):
             else:
                 return sent2row(last_sent, key2type)
 
-    def clear(self):
-        target_file = self.state.file
-        if target_file is not None:
-            raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
-        remove_file(self.fpath)
 
-    def initialize(self, key2type):
+    def initialize(self, key2type)->'TableAO_FileTSV':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
@@ -352,8 +347,28 @@ class TableAO_FileTSV(BaseTableAO):
     #     ) + '\n'
     #
     #     state.file.write(content.encode())
+    def exists(self) -> bool:
+        return os.path.exists(self.fpath)
 
-    def append(self, row):
+    def delete(self)->'TableAO_FileTSV':
+        target_file = self.state.file
+        if target_file is not None:
+            raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
+        remove_file(self.fpath)
+        return self
+
+    def clear(self)->'TableAO_FileTSV':
+        target_file = self.state.file
+        if target_file is not None:
+            raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
+
+        with open(self.fpath, 'rb+') as f:
+            goto_head(f)
+            readline_forward(f)
+            truncate(f)
+        return self
+
+    def append(self, row)->'TableAO_FileTSV':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
             try:
@@ -369,12 +384,13 @@ class TableAO_FileTSV(BaseTableAO):
             # self._write_row(cur_state, row)
             cur_state.next_idx += 1
             set_pos(cur_state.file, cur_pos)
+        return self
 
-    def extend(self, rows):
-        if len(rows) == 0:
-            return
+    def extend(self, rows)->'TableAO_FileTSV':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
+            if len(rows) == 0:
+                return
             try:
                 start_idx = temp_state.next_idx
                 extend_lines(temp_state.file, [
@@ -386,6 +402,8 @@ class TableAO_FileTSV(BaseTableAO):
                 self._clean_state(temp_state)
         else:
             cur_state = self.state
+            if len(rows) == 0:
+                return
             cur_pos = get_pos(cur_state.file)
             goto_tail(cur_state.file)
             start_idx = cur_state.next_idx
@@ -396,15 +414,16 @@ class TableAO_FileTSV(BaseTableAO):
             # self._write_rows(cur_state, rows)
             cur_state.next_idx += len(rows)
             set_pos(cur_state.file, cur_pos)
+        return self
 
-    def keys(self):
+    def keys(self)->list:
         if self.state.file is None:
             temp_state = self._build_state(open_mode='rb')
             res_key2type = temp_state.key2type.keys()
             self._clean_state(temp_state)
-            return res_key2type
+            return list(res_key2type)
         else:
-            return self.state.key2type.keys()
+            return list(self.state.key2type.keys())
 
     def __len__(self):
         if self.state.file is None:
@@ -453,18 +472,92 @@ class TableAO_FileTSV(BaseTableAO):
     def cols(self, keys=None, idxs=Slice[::]):
         return self[idxs, keys, sent2flat]
 
-    def exists(self) -> bool:
-        return os.path.exists(self.fpath)
+    def pop(self) -> dict:
+        if self.state.file is None:
+            temp_state = self._build_state(open_mode='rb+')
+            try:
+                if temp_state.next_idx == 0:
+                    return {}
+                else:
+                    sent = popout(temp_state.file)
+                    item = sent2row(sent.decode(), temp_state.key2type, key2idx=None)
+
+                    return item
+
+            finally:
+                self._clean_state(temp_state)
+        else:
+            cur_state = self.state
+            cur_pos = get_pos(cur_state.file)
+            try:
+                if cur_state.next_idx == 0:
+                    return {}
+                else:
+                    sent = popout(cur_state.file)
+                    item = sent2row(sent.decode(), cur_state.key2type, key2idx=None)
+                    return item
+
+            finally:
+                set_pos(cur_state.file, cur_pos)
+
+    def shrink(self, n: int) -> list:
+        if self.state.file is None:
+            temp_state = self._build_state(open_mode='rb+')
+            try:
+                if temp_state.next_idx == 0:
+                    return []
+                else:
+                    sents = []
+                    cur_idx = temp_state.next_idx
+                    goto_tail(temp_state.file)
+                    for i in range(n):
+                        if cur_idx == 0:
+                            break
+                        else:
+                            sent = readline_backward(temp_state.file)
+                            sents.append(sent)
+                            cur_idx -= 1
+                    items = [sent2row(sent.decode(), temp_state.key2type, key2idx=None) for sent in sents]
+                    truncate(temp_state.file)
+                    temp_state.next_idx = n
+                    return items
+
+            finally:
+                self._clean_state(temp_state)
+        else:
+            cur_state = self.state
+            cur_pos = get_pos(cur_state.file)
+            try:
+                if cur_state.next_idx == 0:
+                    return []
+                else:
+                    sents = []
+                    cur_idx = cur_state.next_idx
+                    goto_tail(cur_state.file)
+                    for i in range(n):
+                        if cur_idx == 0:
+                            break
+                        else:
+                            sent = readline_backward(cur_state.file)
+                            sents.append(sent)
+                            cur_idx -= 1
+                    items = [sent2row(sent.decode(), cur_state.key2type, key2idx=None) for sent in sents]
+                    truncate(cur_state.file)
+                    cur_state.next_idx = n
+                    return items
+
+            finally:
+                set_pos(cur_state.file, cur_pos)
 
 
 if __name__ == '__main__':
     pass
 
-    from gatling.utility.xprint import printi
+    from gatling.utility.xprint import printi, print_rows
     from a_const_debug import fpath_temp_tsv, const_key2type, row1, row2, rows
 
     ft = TableAO_FileTSV(fpath_temp_tsv)
-    ft.clear()
+    ft.delete()
 
     if False:
         printi(ft.get_key2type())
@@ -504,13 +597,31 @@ if __name__ == '__main__':
         # printi(ft[:1,])
         #
         # printi(ft[:1, ['score', 'name']])
-    if True:
+    if False:
         ft.extend(rows)
         # print_rows(rows_extra[::-2])
         # print()
         # print_rows(ft[::-2])
 
         ft.cols(['name'], Slice[:])
+    if False:
+        ft.extend(rows)
+        print_rows(rows)
+        print('==')
+        while True:
+            item = ft.pop()
+            if item == {}:
+                break
+            print_rows([item])
+
+    if True:
+        ft.extend(rows)
+        print_rows(ft[:])
+
+        print('==')
+        print_rows(ft.shrink(2))
+        print('==')
+        print_rows(ft[:])
 
     #
     # x = input('press enter to exit')

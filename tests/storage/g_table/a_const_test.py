@@ -46,6 +46,7 @@ const_key2rand = {
 }
 
 const_key2type = {key: type(rf()) for key, rf in const_key2rand.items()}
+const_key2type_extra = {KEY_IDX: int, **const_key2type}
 const_keys = list(const_key2rand.keys())
 const_keys_extra =[KEY_IDX, *const_keys]
 

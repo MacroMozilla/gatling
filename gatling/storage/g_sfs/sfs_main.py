@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from gatling.storage.h_file_system.sfs_helper import PathRouterTrivial, PathRouter, PathRouterBranch, is_empty, check_safe
+from gatling.storage.g_sfs.sfs_helper import PathRouterTrivial, PathRouter, PathRouterBranch, is_empty, check_safe
 
 
 class SuperFileSystem:

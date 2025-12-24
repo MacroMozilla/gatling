@@ -2,7 +2,7 @@ import unittest
 from abc import ABCMeta, ABC
 
 
-class ConditionalTestSkipMeta(ABCMeta):
+class ConditionalMetaSkipTest(ABCMeta):
 
     def __new__(mcs, name, bases, namespace):
         cls = super().__new__(mcs, name, bases, namespace)
