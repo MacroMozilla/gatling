@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gatling"
 dynamic = ["dependencies"]
-version = "0.3.0.22"
+version = "0.3.0.23"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 

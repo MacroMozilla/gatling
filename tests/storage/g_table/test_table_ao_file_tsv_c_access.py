@@ -5,7 +5,7 @@ from itertools import combinations
 
 from gatling.storage.g_table.help_tools.slice_tools import Slice
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
-from helper.subtestcase import SubTestCase
+from gatling.ztest.subtestcase import SubTestCase
 from storage.g_table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols, rand_row
 
 s = Slice

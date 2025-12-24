@@ -4,7 +4,7 @@ import unittest
 
 from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV, KEY_IDX
 from gatling.utility.error_tools import FileAlreadyOpenedError, FileAlreadyOpenedForWriteError, FileNotOpenError
-from helper.subtestcase import SubTestCase
+from gatling.ztest.subtestcase import SubTestCase
 from storage.g_table.a_const_test import const_key2type, rand_row, const_key2type_extra, const_keys_extra, rows2cols, const_keys
 
 

@@ -4,7 +4,7 @@ from typing import Optional
 
 from gatling.storage.g_sfs.sfs_helper import PathRouterTrivial, PathRouterBranch
 from gatling.storage.g_sfs.sfs_main import SuperFileSystem
-from helper.subtestcase import SubTestCase
+from gatling.ztest.subtestcase import SubTestCase
 
 
 class AbstractgTestSFS(SubTestCase):
