@@ -43,16 +43,17 @@ class SuperFileSystem:
         dpath = os.path.join(self.dpath_root_dbname, *subpaths, dirname)
         return os.path.exists(dpath)
 
-    def mkdir(self, dirname: str) -> str:
+    def mkdir(self, dirname: str, logfctn=None) -> str:
         check_safe(dirname)
         subpaths = self.path_router(dirname)
         dpath = os.path.join(self.dpath_root_dbname, *subpaths, dirname)
         if os.path.exists(dpath):
-            print(f"Directory already exists at {dpath}")
-
+            if logfctn is not None:
+                logfctn(f"Directory already exists at {dpath}")
         else:
             os.makedirs(dpath, exist_ok=True)
-            print(f"Created directory at {dpath}")
+            if logfctn is not None:
+                logfctn(f"Created directory at {dpath}")
         return dpath
 
     def rmdir(self, dirname: str) -> bool:
