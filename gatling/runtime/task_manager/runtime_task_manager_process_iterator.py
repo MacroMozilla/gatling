@@ -10,7 +10,7 @@ import multiprocess as mp
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
 from gatling.storage.g_queue.base_queue import BaseQueue
 from gatling.storage.g_queue.memory_queue import MemoryQueue
-from gatling.utility.xprint import print_flush, check_picklable
+from gatling.utility.xprint import xprint_flush, check_picklable
 
 
 def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, retry_on_error, retry_empty_interval, errlogfctn):
@@ -79,7 +79,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error: bool = False,
                  retry_empty_interval=0.001,
-                 errlogfctn=print_flush):
+                 errlogfctn=xprint_flush):
         super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
 
         self.process_stop_event: mp.Event = mp.Event()  # False
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     rt = RuntimeTaskManagerProcessIterator(fake_iter_cpu, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
 
-    with rt.execute(worker=5, log_interval=1, logfctn=print_flush):
+    with rt.execute(worker=5, log_interval=1, logfctn=xprint_flush):
         for i in range(10):
             rt.qwait.put(i)
 

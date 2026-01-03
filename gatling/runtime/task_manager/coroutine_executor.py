@@ -1,12 +1,12 @@
 import asyncio
 import traceback
 
-from gatling.utility.xprint import print_flush
+from gatling.utility.xprint import xprint_flush
 
 
 class CoroutineExecutor():
 
-    def __init__(self, max_workers=5, logfctn=print_flush):
+    def __init__(self, max_workers=5, logfctn=xprint_flush):
         self.max_workers = max_workers
         self.logfctn = logfctn
         self.coroutine_tasks = []

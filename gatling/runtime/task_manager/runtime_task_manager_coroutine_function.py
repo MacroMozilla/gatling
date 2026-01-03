@@ -9,7 +9,7 @@ from gatling.runtime.task_manager.coroutine_executor import CoroutineExecutor
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
 from gatling.storage.g_queue.base_queue import BaseQueue
 from gatling.storage.g_queue.memory_queue import MemoryQueue
-from gatling.utility.xprint import print_flush
+from gatling.utility.xprint import xprint_flush
 
 
 async def async_producer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, asyncio_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
@@ -45,7 +45,7 @@ class RuntimeTaskManagerCoroutineFunction(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error:bool=False,
                  retry_empty_interval=0.001,
-                 errlogfctn=print_flush):
+                 errlogfctn=xprint_flush):
         super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error,retry_empty_interval=retry_empty_interval)
 
         self.asyncio_stop_event: asyncio.Event = asyncio.Event()  # False
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     rt = RuntimeTaskManagerCoroutineFunction(async_fake_fctn_net, qwait=MemoryQueue(), qwork=MemoryQueue(), qerrr=MemoryQueue(), qdone=MemoryQueue())
 
-    with rt.execute(worker=5, log_interval=1, logfctn=print_flush):
+    with rt.execute(worker=5, log_interval=1, logfctn=xprint_flush):
         for i in range(10):
             rt.qwait.put(i)
 

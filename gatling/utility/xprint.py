@@ -2,19 +2,24 @@ import pickle
 import types
 
 from tqdm import tqdm
-from icecream import ic as printi
+from icecream import ic as xprint_ice
 
 
-def print_rows(box):
+def xprint_rows(box):
     for i, item in enumerate(box):
         print(i, item)
 
 
-def print_flush(*args, **kwargs):
+def xprint_k2vs(k2vs):
+    for k, vs in k2vs.items():
+        print(k, vs)
+
+
+def xprint_flush(*args, **kwargs):
     print(*args, flush=True, **kwargs)
 
 
-def print_none(*args, **kwargs):
+def xprint_none(*args, **kwargs):
     return
 
 
@@ -52,5 +57,5 @@ if __name__ == '__main__':
     check_globals_pickable()
 
     x = 1
-    printi.configureOutput(includeContext=True)
-    printi(x)
+    xprint_ice.configureOutput(includeContext=True)
+    xprint_ice(x)

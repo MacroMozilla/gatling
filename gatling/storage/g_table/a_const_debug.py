@@ -2,7 +2,7 @@ import datetime
 import os
 from pathlib import Path
 
-from gatling.utility.xprint import print_rows
+from gatling.utility.xprint import xprint_rows
 
 const_key2type = {
     'name': str,
@@ -71,4 +71,4 @@ fpath_temp_tsv = os.path.join(dtemp, 'temp.tsv')
 
 
 if __name__ == '__main__':
-    print_rows(rows_extra)
+    xprint_rows(rows_extra)

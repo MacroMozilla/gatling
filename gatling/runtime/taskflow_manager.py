@@ -19,7 +19,7 @@ from gatling.storage.g_queue.base_queue import BaseQueue
 from gatling.storage.g_queue.memory_queue import MemoryQueue
 
 from gatling.utility.watch import Watch
-from gatling.utility.xprint import check_globals_pickable, print_flush, print_none
+from gatling.utility.xprint import check_globals_pickable, xprint_flush, xprint_none
 
 K_cost = 'cost'
 K_speed = 'speed'
@@ -41,7 +41,7 @@ def format_timedelta(delta: timedelta) -> str:
 
 class TaskFlowManager:
 
-    def __init__(self, wait_queue: BaseQueue[Any], done_queue: BaseQueue[Any] = None, errr_queue: BaseQueue[Any] = None, retry_on_error=True, retry_empty_interval=0, errlogfctn=print_flush):
+    def __init__(self, wait_queue: BaseQueue[Any], done_queue: BaseQueue[Any] = None, errr_queue: BaseQueue[Any] = None, retry_on_error=True, retry_empty_interval=0, errlogfctn=xprint_flush):
 
         # Build stages
         self.runtime_task_manager_s: List[RuntimeTaskManager] = []
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         # for i in range(10):
         #     q_wait.put(i + 1)
 
-        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=print_none)
+        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=xprint_none)
 
         with tfm.execute(log_interval=1):
             tfm.register_process(errr_fctn_cpu, worker=2)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         # for i in range(10):
         #     q_wait.put(i + 1)
 
-        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=print_none)
+        tfm = TaskFlowManager(q_wait, retry_on_error=True, errlogfctn=xprint_none)
 
         tfm.register_process(errr_fctn_cpu, worker=2)
         tfm.register_thread(errr_fctn_disk, worker=2)

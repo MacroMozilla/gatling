@@ -557,7 +557,7 @@ class TableAO_FileTSV(BaseTableAO):
 if __name__ == '__main__':
     pass
 
-    from gatling.utility.xprint import printi, print_rows
+    from gatling.utility.xprint import printi, xprint_rows
     from a_const_debug import fpath_temp_tsv, const_key2type, row1, row2, rows
 
     ft = TableAO_FileTSV(fpath_temp_tsv)
@@ -610,22 +610,22 @@ if __name__ == '__main__':
         ft.cols(['name'], Slice[:])
     if False:
         ft.extend(rows)
-        print_rows(rows)
+        xprint_rows(rows)
         print('==')
         while True:
             item = ft.pop()
             if item == {}:
                 break
-            print_rows([item])
+            xprint_rows([item])
 
     if True:
         ft.extend(rows)
-        print_rows(ft[:])
+        xprint_rows(ft[:])
 
         print('==')
-        print_rows(ft.shrink(2))
+        xprint_rows(ft.shrink(2))
         print('==')
-        print_rows(ft[:])
+        xprint_rows(ft[:])
 
     #
     # x = input('press enter to exit')
