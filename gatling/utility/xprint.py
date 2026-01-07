@@ -10,9 +10,9 @@ def xprint_rows(box):
         print(i, item)
 
 
-def xprint_k2vs(k2vs):
-    for k, vs in k2vs.items():
-        print(k, vs)
+def xprint_k2v(k2v):
+    for k, v in k2v.items():
+        print(k, v)
 
 
 def xprint_flush(*args, **kwargs):
