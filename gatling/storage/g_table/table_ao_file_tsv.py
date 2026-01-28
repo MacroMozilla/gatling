@@ -265,8 +265,7 @@ class TableAO_FileTSV(BaseTableAO):
             else:
                 return sent2row(last_sent, key2type)
 
-
-    def initialize(self, key2type)->'TableAO_FileTSV':
+    def initialize(self, key2type) -> 'TableAO_FileTSV':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
@@ -350,14 +349,14 @@ class TableAO_FileTSV(BaseTableAO):
     def exists(self) -> bool:
         return os.path.exists(self.fpath)
 
-    def delete(self)->'TableAO_FileTSV':
+    def delete(self) -> 'TableAO_FileTSV':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
         remove_file(self.fpath)
         return self
 
-    def clear(self)->'TableAO_FileTSV':
+    def clear(self) -> 'TableAO_FileTSV':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
@@ -368,7 +367,7 @@ class TableAO_FileTSV(BaseTableAO):
             truncate(f)
         return self
 
-    def append(self, row)->'TableAO_FileTSV':
+    def append(self, row) -> 'TableAO_FileTSV':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
             try:
@@ -386,7 +385,7 @@ class TableAO_FileTSV(BaseTableAO):
             set_pos(cur_state.file, cur_pos)
         return self
 
-    def extend(self, rows)->'TableAO_FileTSV':
+    def extend(self, rows) -> 'TableAO_FileTSV':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
             try:
@@ -404,6 +403,7 @@ class TableAO_FileTSV(BaseTableAO):
             cur_state = self.state
             if len(rows) == 0:
                 return self
+
             cur_pos = get_pos(cur_state.file)
             goto_tail(cur_state.file)
             start_idx = cur_state.next_idx
@@ -416,7 +416,7 @@ class TableAO_FileTSV(BaseTableAO):
             set_pos(cur_state.file, cur_pos)
         return self
 
-    def keys(self)->list:
+    def keys(self) -> list:
         if self.state.file is None:
             temp_state = self._build_state(open_mode='rb')
             try:

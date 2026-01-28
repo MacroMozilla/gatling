@@ -1,5 +1,5 @@
 ﻿aiohappyeyeballs==2.6.1
-aiohttp==3.13.2
+aiohttp
 aiosignal==1.4.0
 asttokens==3.0.1
 asyncio==4.0.0
@@ -15,7 +15,7 @@ idna==3.11
 line_profiler==5.0.0
 multidict==6.7.0
 multiprocess==0.70.18
-orjson==3.11.4
+orjson
 packaging==25.0
 pipdeptree==2.28.0
 propcache==0.4.1
