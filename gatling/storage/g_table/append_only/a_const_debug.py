@@ -2,17 +2,18 @@ import datetime
 import os
 from pathlib import Path
 
+from gatling.define.schema import SchemaBase, Field
 from gatling.utility.xprint import xprint_rows
 
-const_key2type = {
-    'name': str,
-    'age': int,
-    'score': float,
-    'active': bool,
-    'birthday': datetime.date,
-    'alarm': datetime.time,
-    'created_at': datetime.datetime,
-}
+
+class ConstSchema(SchemaBase):
+    name       = Field(str)
+    age        = Field(int)
+    score      = Field(float)
+    active     = Field(bool)
+    birthday   = Field(datetime.date)
+    alarm      = Field(datetime.time)
+    created_at = Field(datetime.datetime)
 
 row1 = {
     'name': 'Harry Mozilla',

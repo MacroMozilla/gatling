@@ -2,7 +2,8 @@ from collections import defaultdict
 
 from pygments.lexers import data
 
-from gatling.storage.g_table.table_ao_file_tsv import KEY_IDX
+from gatling.define.schema import SchemaBase, Field
+from gatling.storage.g_table.append_only.real_tsv_table import KEY_IDX
 from gatling.utility.rand_tools import (
     rand_bool, rand_uint8, rand_int32, rand_float_01, rand_float_pos,
     rand_float_any, rand_float_inf, rand_name_zh,
@@ -45,10 +46,11 @@ const_key2rand = {
     'created_at': rand_datetime,
 }
 
-const_key2type = {key: type(rf()) for key, rf in const_key2rand.items()}
+ConstTestSchema = SchemaBase('ConstTestSchema', {key: Field(type(rf())) for key, rf in const_key2rand.items()})
+const_key2type = ConstTestSchema.get_key2type()
 const_key2type_extra = {KEY_IDX: int, **const_key2type}
 const_keys = list(const_key2rand.keys())
-const_keys_extra =[KEY_IDX, *const_keys]
+const_keys_extra = [KEY_IDX, *const_keys]
 
 def rand_row():
     return {key: rf() for key, rf in const_key2rand.items()}

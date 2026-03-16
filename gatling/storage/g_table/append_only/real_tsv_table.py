@@ -4,11 +4,11 @@ import traceback
 from dataclasses import dataclass
 from typing import Optional, IO, Any, BinaryIO, Literal
 
-import ciso8601
+from gatling.define.schema import SchemaBase, Field
 
-from gatling.storage.g_table.base_table_ao import BaseTableAO
-from gatling.storage.g_table.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head, truncate, popout
-from gatling.storage.g_table.help_tools.slice_tools import Slice
+from gatling.storage.g_table.append_only.base_apo_table import BaseAPOTable
+from gatling.storage.g_table.append_only.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head, truncate, popout
+from gatling.storage.g_table.append_only.help_tools.slice_tools import Slice
 from gatling.utility.error_tools import FileAlreadyOpenedForWriteError, FileAlreadyOpenedError, FileAlreadyOpenedForReadError, FileNotOpenError
 from gatling.utility.io_fctns import remove_file
 
@@ -18,35 +18,15 @@ def is_write_mode(file: IO) -> bool:
     return bool(set(file.mode) & {"w", "a", "+", "x"})
 
 
-keytype_to_sent = {
-    str: str,
-    int: str,
-    float: str,
-    bool: lambda x: str(int(x)),
-    datetime.date: datetime.date.isoformat,
-    datetime.time: datetime.time.isoformat,
-    datetime.datetime: datetime.datetime.isoformat,
-}
+class KeyType(SchemaBase):
+    str      = Field(str)
+    int      = Field(int)
+    float    = Field(float)
+    bool     = Field(bool)
+    date     = Field(datetime.date)
+    time     = Field(datetime.time)
+    datetime = Field(datetime.datetime)
 
-keytype_fm_sent = {
-    str: str,
-    int: int,
-    float: float,
-    bool: lambda x: x != '0',
-    datetime.date: lambda x: ciso8601.parse_datetime(x).date(),
-    datetime.time: lambda x: datetime.time.fromisoformat(x),
-    datetime.datetime: ciso8601.parse_datetime,
-}
-
-sent_2_keytype = {
-    'str': str,
-    'int': int,
-    'float': float,
-    'bool': bool,
-    'date': datetime.date,
-    'time': datetime.time,
-    'datetime': datetime.datetime,
-}
 
 KEY_IDX = "*"
 
@@ -64,7 +44,7 @@ def head2sent(key2type):
 
 def sent2head(sent):
     try:
-        return {k: sent_2_keytype[v] for k, v in (item.rsplit('.', 1) for item in sent.split('\t'))}
+        return {k: KeyType[v].dtype for k, v in (item.rsplit('.', 1) for item in sent.split('\t'))}
     except ValueError as e:
         print(f"{e} error parsing (rsplit failed): {sent!r}")
 
@@ -77,17 +57,17 @@ def sent2head(sent):
 
 
 def row2sent(row, key2type):
-    return '\t'.join(keytype_to_sent[ktype](row[kname]) for kname, ktype in key2type.items())
+    return '\t'.join(KeyType[ktype.__name__].tostr(row[kname]) for kname, ktype in key2type.items())
 
 
 def sent2row(sent, key2type, key2idx=None):
     values = sent.split('\t')
     if key2idx is None:
-        return {kname: keytype_fm_sent[ktype](val) for (kname, ktype), val in zip(key2type.items(), values)}
+        return {kname: KeyType[ktype.__name__].fmstr(val) for (kname, ktype), val in zip(key2type.items(), values)}
     else:
 
         return {
-            key: keytype_fm_sent[key2type[key]](values[idx])
+            key: KeyType[key2type[key].__name__].fmstr(values[idx])
             for key, idx in key2idx.items()
         }
 
@@ -95,9 +75,9 @@ def sent2row(sent, key2type, key2idx=None):
 def sent2flat(sent, key2type, key2idx=None):
     values = sent.split('\t')
     if key2idx is None:
-        return [keytype_fm_sent[ktype](val) for (kname, ktype), val in zip(key2type.items(), values)]
+        return [KeyType[ktype.__name__].fmstr(val) for (kname, ktype), val in zip(key2type.items(), values)]
     else:
-        return [keytype_fm_sent[key2type[key]](values[idx]) for key, idx in key2idx.items()]
+        return [KeyType[key2type[key].__name__].fmstr(values[idx]) for key, idx in key2idx.items()]
 
 
 def get_key2idx(keys, key2type):
@@ -220,7 +200,7 @@ def fetch_data(idxs, temp_state, keys, sent2x):
 #     return '\t'.join(parts)
 
 
-class TableAO_FileTSV(BaseTableAO):
+class TSVTable(BaseAPOTable):
 
     def __init__(self, fpath):
         super().__init__()
@@ -265,11 +245,11 @@ class TableAO_FileTSV(BaseTableAO):
             else:
                 return sent2row(last_sent, key2type)
 
-    def initialize(self, key2type) -> 'TableAO_FileTSV':
+    def initialize(self, schema) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
-        key2type = {KEY_IDX: int, **key2type}
+        key2type = {KEY_IDX: int, **schema.get_key2type()}
         with open(self.fpath, 'wb') as f:
             append_line(f, head2sent(key2type).encode())
         return self
@@ -349,14 +329,14 @@ class TableAO_FileTSV(BaseTableAO):
     def exists(self) -> bool:
         return os.path.exists(self.fpath)
 
-    def delete(self) -> 'TableAO_FileTSV':
+    def delete(self) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
         remove_file(self.fpath)
         return self
 
-    def clear(self) -> 'TableAO_FileTSV':
+    def clear(self) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
@@ -367,7 +347,7 @@ class TableAO_FileTSV(BaseTableAO):
             truncate(f)
         return self
 
-    def append(self, row) -> 'TableAO_FileTSV':
+    def append(self, row) -> 'TSVTable':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
             try:
@@ -385,7 +365,7 @@ class TableAO_FileTSV(BaseTableAO):
             set_pos(cur_state.file, cur_pos)
         return self
 
-    def extend(self, rows) -> 'TableAO_FileTSV':
+    def extend(self, rows) -> 'TSVTable':
         if self.state.file is None:
             temp_state = self._build_state(open_mode='ab')
             try:
@@ -558,9 +538,9 @@ if __name__ == '__main__':
     pass
 
     from gatling.utility.xprint import printi, xprint_rows
-    from a_const_debug import fpath_temp_tsv, const_key2type, row1, row2, rows
+    from a_const_debug import fpath_temp_tsv, ConstSchema, row1, row2, rows
 
-    ft = TableAO_FileTSV(fpath_temp_tsv)
+    ft = TSVTable(fpath_temp_tsv)
     ft.delete()
 
     if False:
@@ -569,7 +549,7 @@ if __name__ == '__main__':
         printi(ft.get_last_row())
         printi('#' * 100)
 
-    ft.initialize(key2type=const_key2type)
+    ft.initialize(schema=ConstSchema)
 
     if False:
         printi(ft.get_key2type())

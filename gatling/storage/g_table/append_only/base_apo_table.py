@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 
-class BaseTableAO():
+class BaseAPOTable():
 
     def __init__(self):
         super().__init__()

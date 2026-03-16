@@ -3,10 +3,10 @@ import tempfile
 import unittest
 from itertools import combinations
 
-from gatling.storage.g_table.help_tools.slice_tools import Slice
-from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
+from gatling.storage.g_table.append_only.help_tools.slice_tools import Slice
+from gatling.storage.g_table.append_only.real_tsv_table import TSVTable
 from gatling.ztest.subtestcase import SubTestCase
-from storage.g_table.a_const_test import const_key2type, const_keys, filterbykeys, rows2cols, rand_row
+from storage.g_table.append_only.a_const_test import ConstTestSchema, const_key2type, const_keys, filterbykeys, rows2cols, rand_row
 
 s = Slice
 
@@ -69,7 +69,7 @@ class TestFileTableAccess(SubTestCase):
         self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
         print(f"Test file path: {self.test_fname}")
 
-        self.ft = TableAO_FileTSV(self.test_fname).initialize(key2type=const_key2type)
+        self.ft = TSVTable(self.test_fname).initialize(schema=ConstTestSchema)
         self.rows = []
 
         self.const_local_error = []

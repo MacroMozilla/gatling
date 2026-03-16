@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
 
-from gatling.storage.g_table.table_ao_file_tsv import TableAO_FileTSV
+from gatling.storage.g_table.append_only.real_tsv_table import TSVTable
 from gatling.utility.io_fctns import save_jsonl, read_jsonl, remove_file, save_pickle, read_pickle
 from gatling.utility.watch import Watch
-from storage.g_table.a_const_test import rand_row, const_key2type
+from storage.g_table.append_only.a_const_test import ConstTestSchema, rand_row
 
 if __name__ == '__main__':
     pass
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     save_pickle(rows,fpath_temp_pkl)
     print(f"save_pickle {w.see_timedelta()}")
 
-    ft = TableAO_FileTSV(fpath_temp_tsv).initialize(key2type=const_key2type)
+    ft = TSVTable(fpath_temp_tsv).initialize(schema=ConstTestSchema)
     ft.extend(rows)
     print(f"FileTableAO.extend {w.see_timedelta()}")
 
