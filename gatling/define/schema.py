@@ -30,7 +30,7 @@ from sqlalchemy.dialects.postgresql import (
 
 # ===================== Type Maps =====================
 
-# Python type -> SQL type (简单模式)
+# Python type -> SQL type (simple mode)
 _PY_TO_SQL = {
     int:                Integer,
     float:              Float,
@@ -43,7 +43,7 @@ _PY_TO_SQL = {
     datetime.timedelta: Interval,
 }
 
-# SQL type -> Python type (反查, 用于 tostr/fmstr)
+# SQL type -> Python type (reverse lookup, used by tostr/fmstr)
 _SQL_TO_PY = {
     SmallInteger:     int,
     Integer:          int,
@@ -252,11 +252,11 @@ class SchemaBase(Enum):
 
 
 
-# ===================== 示例 =====================
+# ===================== Example =====================
 
 if __name__ == "__main__":
 
-    # --- py 模式: 覆盖所有 Python type ---
+    # --- py mode: all Python types ---
     class ConstKey(SchemaBase):
         AppName   = Field(str, default="my_app")
         Port      = Field(int, default=8080)
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         CreatedAt = Field(datetime.datetime, default=datetime.datetime(2025, 1, 1, 12, 0))
         Timeout   = Field(datetime.timedelta, default=datetime.timedelta(seconds=30))
 
-    print("=== py 模式 (所有 Python type) ===")
+    print("=== py mode (all Python types) ===")
     for m in ConstKey:
         print(f"  {m.name:<14} dtype={m.dtype.__name__:<12} default={m.default!r}")
     print()
@@ -287,21 +287,21 @@ if __name__ == "__main__":
     print(f"fmstr(bool)  = {ConstKey.Debug.fmstr('0')}")
     print()
 
-    # --- sql 模式: 覆盖 PostgreSQL 常用类型 ---
+    # --- sql mode: common PostgreSQL types ---
     class TempTable(SchemaBase):
-        # 数字
-        Id        = Field(BigInteger, primary=True, autoincrement=True, comment="主键")
+        # Numeric
+        Id        = Field(BigInteger, primary=True, autoincrement=True, comment="primary key")
         Age       = Field(SmallInteger, default=0)
         ViewCount = Field(Integer, default=0)
         Price     = Field(Numeric(10, 2), default=0.0)
         Rating    = Field(Float, default=0.0)
         Balance   = Field(DOUBLE_PRECISION, default=0.0)
-        # 字符串
-        Name      = Field(String(64), nullable=False, comment="用户名")
+        # String
+        Name      = Field(String(64), nullable=False, comment="username")
         Bio       = Field(Text)
-        # 布尔
+        # Boolean
         IsActive  = Field(Boolean, default=True)
-        # 日期时间
+        # Date/Time
         Birthday  = Field(Date)
         Alarm     = Field(Time)
         CreatedAt = Field(TIMESTAMP(timezone=True), server_default="now()")
@@ -309,16 +309,16 @@ if __name__ == "__main__":
         # JSON
         Settings  = Field(JSONB)
         RawData   = Field(JSON)
-        # 二进制
+        # Binary
         Avatar    = Field(BYTEA)
         # UUID
         Token     = Field(UUID)
-        # 网络
+        # Network
         LoginIp   = Field(INET)
         Network   = Field(CIDR)
         DeviceMac = Field(MACADDR)
 
-    print("=== sql 模式 (PostgreSQL 常用类型) ===")
+    print("=== sql mode (common PostgreSQL types) ===")
     for m in TempTable:
         print(f"  {m.name:<14} dtype={m.dtype.__name__:<12} default={m.default!r}")
     print()

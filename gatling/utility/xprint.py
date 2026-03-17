@@ -33,7 +33,7 @@ def check_picklable(target):
 
 
 def check_globals_pickable():
-    print("🔍 Scanning all globals for picklability...")
+    print("[SCAN] Scanning all globals for picklability...")
     problems = []
 
     for name, obj in tqdm(globals().items()):
@@ -45,11 +45,11 @@ def check_globals_pickable():
             problems.append((name, type(obj).__name__))
 
     if problems:
-        print("⚠️ Non-picklable globals found:")
+        print("[WARN] Non-picklable globals found:")
         for name, typename in problems:
             print(f"  - {name}: {typename}")
     else:
-        print("✅ All globals are picklable.")
+        print("[OK] All globals are picklable.")
 
 
 if __name__ == '__main__':

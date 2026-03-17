@@ -96,9 +96,9 @@ def save_pickle(data: Any, filename: str, level: int = 3) -> None:
     Save Python object with dill and Zstandard compression.
 
     Zstandard compression level:
-        - 1–3  : Fast compression speed, lower compression ratio
-        - 4–6  : Balanced performance (recommended)
-        - 7–12 : Higher compression ratio, slower speed
+        - 1-3  : Fast compression speed, lower compression ratio
+        - 4-6  : Balanced performance (recommended)
+        - 7-12 : Higher compression ratio, slower speed
         - >12  : Maximum compression, very slow (for archiving)
     """
     cctx = zstd.ZstdCompressor(level=level)
