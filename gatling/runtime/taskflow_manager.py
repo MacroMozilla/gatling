@@ -9,8 +9,6 @@ from typing import Callable, List, Any
 from gatling.runtime.task_manager.runtime_task_manager_base import RuntimeTaskManager
 from gatling.runtime.task_manager.runtime_task_manager_process_function import RuntimeTaskManagerProcessFunction
 from gatling.runtime.task_manager.runtime_task_manager_process_iterator import RuntimeTaskManagerProcessIterator
-from gatling.runtime.task_manager.runtime_task_manager_processing_function import RuntimeTaskManagerProcessingFunction
-from gatling.runtime.task_manager.runtime_task_manager_processing_iterator import RuntimeTaskManagerProcessingIterator
 from gatling.runtime.task_manager.runtime_task_manager_thread_function import RuntimeTaskManagerThreadFunction
 from gatling.runtime.task_manager.runtime_task_manager_thread_iterator import RuntimeTaskManagerThreadIterator
 from gatling.runtime.task_manager.runtime_task_manager_coroutine_function import RuntimeTaskManagerCoroutineFunction
@@ -60,7 +58,7 @@ class TaskFlowManager:
             print(f"{i}. {rtm.fctn.__name__} done={id(rtm.qdone)} {rtm.qdone.__class__.__name__}")
         print(f"{id(self.done_queue)=}")
 
-    def make_coroutine(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
+    def make_coroutine(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, max_work_size):
         is_async_iter = inspect.isasyncgenfunction(fctn)
         is_async_fctn = asyncio.iscoroutinefunction(fctn)
         if is_async_fctn:
@@ -69,28 +67,22 @@ class TaskFlowManager:
             rtm_cls = RuntimeTaskManagerCoroutineIterator
         else:
             raise RuntimeError(f"fctn={fctn} is neither async function nor async generator")
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn, max_work_size=max_work_size)
         return rtm
 
-    def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
+    def make_thread(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, max_work_size):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerThreadIterator if is_iter else RuntimeTaskManagerThreadFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn, max_work_size=max_work_size)
         return rtm
 
-    def make_processing(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
-        is_iter = inspect.isgeneratorfunction(fctn)
-        rtm_cls = RuntimeTaskManagerProcessingIterator if is_iter else RuntimeTaskManagerProcessingFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
-        return rtm
-
-    def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker):
+    def make_process(self, fctn: Callable, qwait: BaseQueue[Any], qwork: BaseQueue[Any], qerrr: BaseQueue[Any], qdone: BaseQueue[Any], worker, max_work_size):
         is_iter = inspect.isgeneratorfunction(fctn)
         rtm_cls = RuntimeTaskManagerProcessIterator if is_iter else RuntimeTaskManagerProcessFunction
-        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn)
+        rtm = rtm_cls(fctn, qwait=qwait, qwork=qwork, qerrr=qerrr, qdone=qdone, worker=worker, retry_on_error=self.retry_on_error, retry_empty_interval=self.retry_empty_interval, errlogfctn=self.errlogfctn, max_work_size=max_work_size)
         return rtm
 
-    def _register_generic(self, make_rtm: Callable, fctn: Callable, worker: int):
+    def _register_generic(self, make_rtm: Callable, fctn: Callable, worker: int, max_work_size: int):
         if len(self.runtime_task_manager_s) == 0:
             curr_qwait = self.wait_queue
         else:
@@ -99,20 +91,18 @@ class TaskFlowManager:
             prev_rtm.qdone = curr_qwait
 
         curr_qerrr = MemoryQueue()
-        rtm = make_rtm(fctn, qwait=curr_qwait, qwork=MemoryQueue(), qerrr=curr_qerrr, qdone=self.done_queue, worker=worker)
+        curr_qwork = MemoryQueue(maxsize=max_work_size)
+        rtm = make_rtm(fctn, qwait=curr_qwait, qwork=curr_qwork, qerrr=curr_qerrr, qdone=self.done_queue, worker=worker, max_work_size=max_work_size)
         self.runtime_task_manager_s.append(rtm)
 
-    def register_coroutine(self, fctn: Callable, worker=1):
-        self._register_generic(self.make_coroutine, fctn, worker)
+    def register_coroutine(self, fctn: Callable, worker=1, max_work_size=0):
+        self._register_generic(self.make_coroutine, fctn, worker, max_work_size)
 
-    def register_thread(self, fctn: Callable, worker=1):
-        self._register_generic(self.make_thread, fctn, worker)
+    def register_thread(self, fctn: Callable, worker=1, max_work_size=0):
+        self._register_generic(self.make_thread, fctn, worker, max_work_size)
 
-    def register_processing(self, fctn: Callable, worker=1):
-        self._register_generic(self.make_processing, fctn, worker)
-
-    def register_process(self, fctn: Callable, worker=1):
-        self._register_generic(self.make_process, fctn, worker)
+    def register_process(self, fctn: Callable, worker=1, max_work_size=0):
+        self._register_generic(self.make_process, fctn, worker, max_work_size)
 
     def before_start_record(self):
         self.N_already_done = len(self.done_queue)

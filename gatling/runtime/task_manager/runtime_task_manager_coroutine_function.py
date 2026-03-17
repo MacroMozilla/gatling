@@ -16,7 +16,14 @@ async def async_producer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, asyncio_sto
     while True:
         try:
             arg = qwait.get(block=False)
-            qwork.put(arg)
+            while True:
+                try:
+                    qwork.put(arg)
+                    break
+                except queue.Full:
+                    if asyncio_stop_event.is_set():
+                        return
+                    await asyncio.sleep(retry_empty_interval)
             try:
                 res = await fctn(arg)
                 qdone.put(res)
@@ -45,8 +52,9 @@ class RuntimeTaskManagerCoroutineFunction(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error:bool=False,
                  retry_empty_interval=0.001,
-                 errlogfctn=xprint_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error,retry_empty_interval=retry_empty_interval)
+                 errlogfctn=xprint_flush,
+                 max_work_size: int = 0):
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval, max_work_size=max_work_size)
 
         self.asyncio_stop_event: asyncio.Event = asyncio.Event()  # False
         self.asyncio_running_executor: Optional[CoroutineExecutor] = None
@@ -89,7 +97,7 @@ class RuntimeTaskManagerCoroutineFunction(RuntimeTaskManager):
             producer_thread.join()
         self.producers.clear()
 
-        self.asyncio_running_executor_worker = 0
+        self.asyncio_running_executor = None
 
         self.asyncio_stop_event.clear()
 

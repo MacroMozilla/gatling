@@ -1,6 +1,5 @@
 import queue
 import threading
-import time
 import traceback
 from concurrent.futures import Future
 from typing import Callable, Any
@@ -12,26 +11,32 @@ from gatling.utility.xprint import xprint_flush
 
 
 def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, retry_on_error, retry_empty_interval, errlogfctn):
+    _timeout = retry_empty_interval or 0.1
     while True:
         try:
-            arg = qwait.get(block=False)
-            qwork.put(arg)
-            try:
-                gen = fctn(arg)
-                for item in gen:
-                    qdone.put(item)
-            except Exception:
-                errlogfctn(traceback.format_exc())
-                qerrr.put(arg)
-                if retry_on_error:
-                    qwait.put(arg)
-            finally:
-                qwork.get(block=True)
+            arg = qwait.get(block=True, timeout=_timeout)
         except queue.Empty:
             if stop_event.is_set():
                 break
-            else:
-                time.sleep(retry_empty_interval)
+            continue
+        while True:
+            try:
+                qwork.put(arg, block=True, timeout=_timeout)
+                break
+            except queue.Full:
+                if stop_event.is_set():
+                    return
+        try:
+            gen = fctn(arg)
+            for item in gen:
+                qdone.put(item)
+        except Exception:
+            errlogfctn(traceback.format_exc())
+            qerrr.put(arg)
+            if retry_on_error:
+                qwait.put(arg)
+        finally:
+            qwork.get(block=True)
 
 
 class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
@@ -44,8 +49,9 @@ class RuntimeTaskManagerThreadIterator(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error: bool = False,
                  retry_empty_interval=0.001,
-                 errlogfctn=xprint_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
+                 errlogfctn=xprint_flush,
+                 max_work_size: int = 0):
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval, max_work_size=max_work_size)
 
         self.thread_stop_event: threading.Event = threading.Event()  # False
         self.thread_running_executor_worker: int = 0

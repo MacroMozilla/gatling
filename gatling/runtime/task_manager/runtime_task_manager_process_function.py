@@ -1,6 +1,5 @@
 import queue
 import threading
-import time
 import traceback
 
 import multiprocess as mp
@@ -15,23 +14,30 @@ from gatling.utility.xprint import xprint_flush, check_picklable
 
 
 def producer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
+    _timeout = retry_empty_interval or 0.1
     while True:
         try:
-            arg = qwait.get(block=False)
-            fut = running_executor.apply_async(fctn, (arg,))
-            fut.args = (arg,)
-            qwork.put(fut)
+            arg = qwait.get(block=True, timeout=_timeout)
         except queue.Empty:
             if thread_stop_event.is_set():
                 break
-            else:
-                time.sleep(retry_empty_interval)
+            continue
+        fut = running_executor.apply_async(fctn, (arg,))
+        fut.args = (arg,)
+        while True:
+            try:
+                qwork.put(fut, block=True, timeout=_timeout)
+                break
+            except queue.Full:
+                if thread_stop_event.is_set():
+                    return
 
 
 def consumer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, thread_stop_event, retry_on_error, retry_empty_interval, errlogfctn):
+    _timeout = retry_empty_interval or 0.1
     while True:
         try:
-            fut = qwork.get(block=False)
+            fut = qwork.get(block=True, timeout=_timeout)
             try:
                 res = fut.get()
                 qdone.put(res)
@@ -46,8 +52,6 @@ def consumer_fctn_loop(fctn, qwait, qwork, qerrr, qdone, running_executor, threa
         except queue.Empty:
             if thread_stop_event.is_set():
                 break
-            else:
-                time.sleep(retry_empty_interval)
 
 
 class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
@@ -60,8 +64,9 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error: bool = False,
                  retry_empty_interval=0.001,
-                 errlogfctn=xprint_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
+                 errlogfctn=xprint_flush,
+                 max_work_size: int = 0):
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval, max_work_size=max_work_size)
 
         self.thread_stop_event: threading.Event = threading.Event()  # False
         self.process_running_executor: Optional[mp.Pool] = None
@@ -71,8 +76,8 @@ class RuntimeTaskManagerProcessFunction(RuntimeTaskManager):
         self.producers = []
         self.consumers = []
 
-        for fctn in [self.fctn, self.errlogfctn]:
-            check_picklable(fctn)
+        for f in [self.fctn, self.errlogfctn]:
+            check_picklable(f)
 
     def __len__(self):
         return self.process_running_executor_worker

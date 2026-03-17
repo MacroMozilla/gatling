@@ -16,7 +16,7 @@ class TestRuntimeTaskManagerThread(DynamicTestCase):
 
 
 # Define Test Case Function
-def testcase_fctn(resources, fctns, worker=2, use_ctx=False, retry_empty_interval=0, log_interval=0.001):
+def testcase_fctn(resources, fctns, worker=2, use_ctx=False, retry_empty_interval=0, log_interval=0.001, max_work_size=0):
     q_wait = MemoryQueue()
     for i in range(5):
         q_wait.put(i + 1)
@@ -25,11 +25,11 @@ def testcase_fctn(resources, fctns, worker=2, use_ctx=False, retry_empty_interva
 
     for resource, fctn in zip(resources, fctns):
         if resource == R_process:
-            tfm.register_process(fctn, worker=worker)
+            tfm.register_process(fctn, worker=worker, max_work_size=max_work_size)
         elif resource == R_thread:
-            tfm.register_thread(fctn, worker=worker)
+            tfm.register_thread(fctn, worker=worker, max_work_size=max_work_size)
         elif resource == R_coroutine:
-            tfm.register_coroutine(fctn, worker=worker)
+            tfm.register_coroutine(fctn, worker=worker, max_work_size=max_work_size)
 
     if use_ctx:
         with tfm.execute(log_interval=log_interval):
@@ -71,6 +71,18 @@ for fname, rsc_fctn_s, in tname2rsc_fctn_s.items():
 
                 resources, fctns = zip(*rsc_fctn_s)
                 TestRuntimeTaskManagerThread.append_testcase(testcase_name, testcase_fctn, resources, fctns, worker, use_ctx, retry_empty_interval)
+
+# === Dynamic Register Test Case (max_work_size) ===
+for fname, rsc_fctn_s, in tname2rsc_fctn_s.items():
+    for max_work_size in [2, 3]:
+        testcase_name = f"test_{fname}_max_work_size={max_work_size}"
+
+        resources, fctns = zip(*rsc_fctn_s)
+        TestRuntimeTaskManagerThread.append_testcase(
+            testcase_name, testcase_fctn,
+            resources, fctns,
+            worker=2, use_ctx=True, retry_empty_interval=0.001, log_interval=0.001, max_work_size=max_work_size
+        )
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

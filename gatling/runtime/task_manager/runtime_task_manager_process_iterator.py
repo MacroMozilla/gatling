@@ -1,6 +1,5 @@
 import queue
 import threading
-import time
 import traceback
 from concurrent.futures import Future
 from typing import Callable, Any
@@ -14,59 +13,64 @@ from gatling.utility.xprint import xprint_flush, check_picklable
 
 
 def producer_iter_loop(fctn, qwait, qwork, qerrr, qdone, stop_event, retry_on_error, retry_empty_interval, errlogfctn):
+    _timeout = retry_empty_interval or 0.1
     while True:
         try:
-            arg = qwait.get(block=False)
-            qwork.put(arg)
+            arg = qwait.get(block=True, timeout=_timeout)
+        except queue.Empty:
+            if stop_event.is_set():
+                break
+            continue
+        while True:
             try:
-                gen = fctn(arg)
-                for x in gen:
-                    qdone.put(x)
-            except Exception:
-                errlogfctn(traceback.format_exc())
-                qerrr.put(arg)
-                if retry_on_error:
-                    qwait.put(arg)
-            finally:
+                qwork.put(arg, block=True, timeout=_timeout)
+                break
+            except queue.Full:
+                if stop_event.is_set():
+                    return
+        try:
+            gen = fctn(arg)
+            for x in gen:
+                qdone.put(x)
+        except Exception:
+            errlogfctn(traceback.format_exc())
+            qerrr.put(arg)
+            if retry_on_error:
+                qwait.put(arg)
+        finally:
+            try:
+                qwork.get(block=True, timeout=_timeout)
+            except queue.Empty:
+                if stop_event.is_set():
+                    break
+
+
+def bridge(qfm, qto, qwork, qwork_action, stop_event, retry_empty_interval, errlogfctn):
+    _timeout = retry_empty_interval or 0.1
+    while True:
+        try:
+            arg = qfm.get(block=True, timeout=_timeout)
+        except queue.Empty:
+            if stop_event.is_set():
+                break
+            continue
+        qto.put(arg)
+
+        if qwork is not None:
+            if qwork_action == 'put':
+                while True:
+                    try:
+                        qwork.put(arg, block=True, timeout=_timeout)
+                        break
+                    except queue.Full:
+                        if stop_event.is_set():
+                            return
+            elif qwork_action == 'get':
                 try:
-                    qwork.get()
+                    qwork.get(block=True, timeout=_timeout)
                 except queue.Empty:
                     if stop_event.is_set():
                         break
-                    else:
-                        time.sleep(retry_empty_interval)
-        except queue.Empty:
-            if stop_event.is_set():
-                break
-            else:
-                time.sleep(retry_empty_interval)
-
-
-def bridge(qfm, qto, qwork_callback, stop_event, retry_empty_interval, errlogfctn):
-    while True:
-        try:
-            arg = qfm.get(block=False)
-            qto.put(arg)
-
-            if qwork_callback:
-                if qwork_callback.__name__ == 'put':
-                    qwork_callback(arg)
-                elif qwork_callback.__name__ == 'get':
-                    try:
-                        qwork_callback(block=False)
-                    except queue.Empty:
-                        if stop_event.is_set():
-                            break
-                        else:
-                            time.sleep(retry_empty_interval)
-                else:
-                    raise ValueError(f"unknown qwork_callback: {qwork_callback} [{qwork_callback.__name__}]")
-
-        except queue.Empty:
-            if stop_event.is_set():
-                break
-            else:
-                time.sleep(retry_empty_interval)
 
 
 class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
@@ -79,8 +83,9 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
                  worker: int = 1,
                  retry_on_error: bool = False,
                  retry_empty_interval=0.001,
-                 errlogfctn=xprint_flush):
-        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval)
+                 errlogfctn=xprint_flush,
+                 max_work_size: int = 0):
+        super().__init__(fctn, qwait, qwork, qerrr, qdone, worker=worker, retry_on_error=retry_on_error, retry_empty_interval=retry_empty_interval, max_work_size=max_work_size)
 
         self.process_stop_event: mp.Event = mp.Event()  # False
         self.thread_stop_event: threading.Event = threading.Event()
@@ -96,8 +101,8 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         self.producers_thread = []
         self.producers_process = []
 
-        for fctn in [self.fctn, self.errlogfctn]:
-            check_picklable(fctn)
+        for f in [self.fctn, self.errlogfctn]:
+            check_picklable(f)
 
     def __len__(self):
         return self.process_running_executor_worker
@@ -116,7 +121,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
         self.process_running_executor_worker = worker
 
         # bridge thread queue to process queue                                                         track qwork in
-        bridge_t2p_wait_thread = threading.Thread(target=bridge, args=(self.qwait, self.process_qwait, self.qwork.put, self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
+        bridge_t2p_wait_thread = threading.Thread(target=bridge, args=(self.qwait, self.process_qwait, self.qwork, 'put', self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
         bridge_t2p_wait_thread.start()
         self.producers_thread.append(bridge_t2p_wait_thread)
 
@@ -127,11 +132,11 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
             self.producers_process.append(producer_process)
 
         # bridge process queue to thread queue
-        bridge_p2t_thread_errr = threading.Thread(target=bridge, args=(self.process_qerrr, self.qerrr, None, self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
+        bridge_p2t_thread_errr = threading.Thread(target=bridge, args=(self.process_qerrr, self.qerrr, None, None, self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
         bridge_p2t_thread_errr.start()
         self.producers_thread.append(bridge_p2t_thread_errr)
         #                                                                                              track qwork out
-        bridge_p2t_thread_done = threading.Thread(target=bridge, args=(self.process_qdone, self.qdone, self.qwork.get, self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
+        bridge_p2t_thread_done = threading.Thread(target=bridge, args=(self.process_qdone, self.qdone, self.qwork, 'get', self.thread_stop_event, self.retry_empty_interval, self.errlogfctn), daemon=True)
         bridge_p2t_thread_done.start()
         self.producers_thread.append(bridge_p2t_thread_done)
 
@@ -140,7 +145,7 @@ class RuntimeTaskManagerProcessIterator(RuntimeTaskManager):
     def stop(self):
         if self.process_running_executor_worker == 0:
             return False
-        if self.process_stop_event.is_set() or self.thread_stop_event is None:
+        if self.process_stop_event.is_set() or self.thread_stop_event.is_set():
             return False
 
         self.errlogfctn(f"{self} stop triggered ... ")
