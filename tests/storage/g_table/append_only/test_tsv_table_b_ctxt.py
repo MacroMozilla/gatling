@@ -5,7 +5,7 @@ import unittest
 from gatling.storage.g_table.append_only.real_tsv_table import TSVTable, KEY_IDX
 from gatling.utility.error_tools import FileAlreadyOpenedError, FileAlreadyOpenedForWriteError, FileNotOpenError
 from gatling.ztest.subtestcase import SubTestCase
-from storage.g_table.append_only.a_const_test import ConstTestSchema, const_key2type, rand_row, const_key2type_extra, const_keys_extra, rows2cols, const_keys
+from storage.g_table.append_only.a_const_test import ConstTestSchema, rand_row, const_key2type_extra, const_keys_extra, rows2cols, const_keys
 
 
 class TestFileTableBase(SubTestCase):

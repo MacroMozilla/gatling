@@ -6,7 +6,7 @@ from itertools import combinations
 from gatling.storage.g_table.append_only.help_tools.slice_tools import Slice
 from gatling.storage.g_table.append_only.real_tsv_table import TSVTable
 from gatling.ztest.subtestcase import SubTestCase
-from storage.g_table.append_only.a_const_test import ConstTestSchema, const_key2type, const_keys, filterbykeys, rows2cols, rand_row
+from storage.g_table.append_only.a_const_test import ConstTestSchema, const_keys, filterbykeys, rows2cols, rand_row
 
 s = Slice
 
