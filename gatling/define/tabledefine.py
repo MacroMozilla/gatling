@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum
 from typing import Any, Callable, Optional
 
 import ciso8601
@@ -25,6 +24,8 @@ from sqlalchemy.dialects.postgresql import (
     INET, CIDR, MACADDR, MACADDR8,
     TIMESTAMP, TIME,
 )
+
+from gatling.define.basedefine import BaseDefine
 
 
 
@@ -174,68 +175,24 @@ class Field:
 
 # ===================== TableDefine =====================
 
-class TableDefine(Enum):
+class TableDefine(BaseDefine):
+    """Field-based enum — table schema with typed columns."""
 
-    @property
-    def default(self) -> Any:
-        return self.value.default if isinstance(self.value, Field) else self.value
+    def __init__(self, value):
+        if not isinstance(value, Field):
+            raise TypeError(f"{self.__class__.__name__} members must be Field, got {type(value).__name__}")
 
-    @property
-    def dtype(self) -> type:
-        return self.value.dtype if isinstance(self.value, Field) else type(self.value)
-
-    @property
-    def primary(self) -> bool:
-        return self.value.primary if isinstance(self.value, Field) else False
-
-    @property
-    def nullable(self) -> bool:
-        return self.value.nullable if isinstance(self.value, Field) else True
-
-    @property
-    def tostr(self) -> Optional[Callable]:
-        return self.value.tostr if isinstance(self.value, Field) else None
-
-    @property
-    def fmstr(self) -> Optional[Callable]:
-        return self.value.fmstr if isinstance(self.value, Field) else None
-
-    @property
-    def column(self) -> Optional[Column]:
-        f = self.value
-        if isinstance(f, Field):
-            if f.column is None:
-                f.get_column(self.name)
-            return f.column
-        return None
+    # --- SQL helpers ---
 
     @classmethod
-    def keys(cls) -> list[str]:
-        return [m.name for m in cls]
-
-    @classmethod
-    def items(cls) -> dict[str, Any]:
-        return {m.name: m.default for m in cls}
-
-    @classmethod
-    def has(cls, name: str) -> bool:
-        return name in cls.__members__
-
-    @classmethod
-    def get(cls, name: str, default: Any = None):
-        if cls.has(name):
-            return cls[name]
-        return default
-
-    @classmethod
-    def get_key2type(cls):
-        return {m.name: m.dtype for m in cls}
+    def get_name2dtype(cls):
+        return {m.name: m.value.dtype for m in cls}
 
     @classmethod
     def get_sql_table(cls) -> Table:
         if not hasattr(cls, '_sql_table'):
             meta = MetaData()
-            cols = [m.column for m in cls if m.column is not None]
+            cols = [m.value.get_column(m.name) for m in cls]
             cls._sql_table = Table(cls.__name__, meta, *cols)
         return cls._sql_table
 
@@ -251,76 +208,46 @@ class TableDefine(Enum):
 
 
 
-
 # ===================== Example =====================
 
 if __name__ == "__main__":
 
-    # --- py mode: all Python types ---
-    class ConstKey(TableDefine):
-        AppName   = Field(str, default="my_app")
-        Port      = Field(int, default=8080)
-        Lr        = Field(float, default=0.001)
-        Debug     = Field(bool, default=False)
-        Secret    = Field(bytes, default=b"key123")
-        StartDate = Field(datetime.date, default=datetime.date(2025, 1, 1))
-        AlarmTime = Field(datetime.time, default=datetime.time(8, 0))
-        CreatedAt = Field(datetime.datetime, default=datetime.datetime(2025, 1, 1, 12, 0))
-        Timeout   = Field(datetime.timedelta, default=datetime.timedelta(seconds=30))
-
-    print("=== py mode (all Python types) ===")
-    for m in ConstKey:
-        print(f"  {m.name:<14} dtype={m.dtype.__name__:<12} default={m.default!r}")
-    print()
-    print(f".keys()  = {ConstKey.keys()}")
-    print(f".items() = {ConstKey.items()}")
-    print(f".has()   = {ConstKey.has('Port')}")
-    print(f".get()   = {ConstKey.get('Port')}")
-    print(f"['Port'] = {ConstKey['Port']}")
-    print(f"len()    = {len(ConstKey)}")
-    print()
-
-    # tostr / fmstr
-    print(f"tostr(date)  = {ConstKey.StartDate.tostr(ConstKey.StartDate.default)}")
-    print(f"fmstr(date)  = {ConstKey.StartDate.fmstr('2025-06-15')}")
-    print(f"tostr(bool)  = {ConstKey.Debug.tostr(True)}")
-    print(f"fmstr(bool)  = {ConstKey.Debug.fmstr('0')}")
-    print()
-
-    # --- sql mode: common PostgreSQL types ---
-    class TempTable(TableDefine):
-        # Numeric
-        Id        = Field(BigInteger, primary=True, autoincrement=True, comment="primary key")
-        Age       = Field(SmallInteger, default=0)
-        ViewCount = Field(Integer, default=0)
-        Price     = Field(Numeric(10, 2), default=0.0)
-        Rating    = Field(Float, default=0.0)
-        Balance   = Field(DOUBLE_PRECISION, default=0.0)
-        # String
-        Name      = Field(String(64), nullable=False, comment="username")
-        Bio       = Field(Text)
-        # Boolean
-        IsActive  = Field(Boolean, default=True)
-        # Date/Time
-        Birthday  = Field(Date)
-        Alarm     = Field(Time)
+    class UserTable(TableDefine):
+        Id        = Field(BigInteger, primary=True, autoincrement=True)
+        Name      = Field(String(64), nullable=False)
+        Score     = Field(Float, default=0.0)
         CreatedAt = Field(TIMESTAMP(timezone=True), server_default="now()")
-        Duration  = Field(Interval)
-        # JSON
-        Settings  = Field(JSONB)
-        RawData   = Field(JSON)
-        # Binary
-        Avatar    = Field(BYTEA)
-        # UUID
-        Token     = Field(UUID)
-        # Network
-        LoginIp   = Field(INET)
-        Network   = Field(CIDR)
-        DeviceMac = Field(MACADDR)
 
-    print("=== sql mode (common PostgreSQL types) ===")
-    for m in TempTable:
-        print(f"  {m.name:<14} dtype={m.dtype.__name__:<12} default={m.default!r}")
+    print("=== TableDefine ===")
+    for m in UserTable:
+        print(f"  {m.name:<14} dtype={m.value.dtype.__name__:<12} default={m.value.default!r}")
     print()
-    print(TempTable.get_sql_create())
-    print(TempTable.get_sql_drop())
+
+    # access — .value is a Field object
+    print(f"  {UserTable.Id.value = }")
+    print(f"  {UserTable.Id.value.dtype = }")
+    print(f"  {UserTable.Id.value.primary = }")
+    print(f"  {UserTable.Name.value.nullable = }")
+    print(f"  {UserTable.Score.value.tostr(9.5) = }")
+    print(f"  {UserTable.Score.value.fmstr('9.5') = }")
+    print()
+
+    # lookup — [], get() return Field directly
+    print(f"  {'Id' in UserTable = }")
+    print(f"  {'nope' in UserTable = }")
+    print(f"  {UserTable['Id'] = }")
+    print(f"  {UserTable.get('Id') = }")
+    print(f"  {UserTable.get('nope') = }")
+    print()
+
+    # collection
+    print(f"  {UserTable.keys() = }")
+    print(f"  {UserTable.items() = }")
+    print(f"  {dict(UserTable) = }")
+    print(f"  {UserTable.get_name2dtype() = }")
+    print(f"  {len(UserTable) = }")
+    print()
+
+    # SQL
+    print(UserTable.get_sql_create())
+    print(UserTable.get_sql_drop())

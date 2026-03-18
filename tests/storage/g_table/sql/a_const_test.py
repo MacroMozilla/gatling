@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import (
     INET, CIDR, MACADDR, TIMESTAMP,
 )
 
-from gatling.define.schema import TableDefine, Field
+from gatling.define.tabledefine import TableDefine, Field
 from gatling.utility.rand_tools import (
     rand_bool, rand_uint8, rand_int32, rand_float_01,
     rand_name_en, rand_url, rand_ip, rand_username, rand_password,

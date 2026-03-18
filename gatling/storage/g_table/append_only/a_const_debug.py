@@ -2,7 +2,7 @@ import datetime
 import os
 from pathlib import Path
 
-from gatling.define.schema import TableDefine, Field
+from gatling.define.tabledefine import TableDefine, Field
 from gatling.utility.xprint import xprint_rows
 
 

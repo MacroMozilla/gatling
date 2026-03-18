@@ -51,7 +51,7 @@ class SQLiteTable(BaseSQLTable):
     def create(self, tabledefine) -> 'SQLiteTable':
         self.tabledefine = tabledefine
         self._all_keys = tabledefine.keys()
-        self._primary_keys = [m.name for m in tabledefine if m.primary]
+        self._primary_keys = [m.name for m in tabledefine if m.value.primary]
         src = tabledefine.get_sql_table()
         self._table = src.to_metadata(MetaData(), name=self.table_name)
         self._json_cols = {c.name for c in self._table.columns if isinstance(c.type, JSON)}

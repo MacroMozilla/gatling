@@ -197,7 +197,7 @@ class TestFileTableBase(SubTestCase):
             with self.subTestCase(prerun=prerun.__name__):
                 self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
-                if prerun is self.preruns_0row:
+                if prerun in self.preruns_0row:
                     self.assertEqual(self.ft.get_last_row(), {})
                 elif prerun in self.preruns_1row:
                     self.assertEqual(self.ft.get_last_row(), {KEY_IDX: 0, **rows[-1]})

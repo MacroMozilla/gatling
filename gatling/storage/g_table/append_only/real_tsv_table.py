@@ -4,7 +4,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Optional, IO, Any, BinaryIO, Literal
 
-from gatling.define.schema import TableDefine, Field
+from gatling.define.tabledefine import TableDefine, Field
 
 from gatling.storage.g_table.append_only.base_apo_table import BaseAPOTable
 from gatling.storage.g_table.append_only.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head, truncate, popout
@@ -249,7 +249,7 @@ class TSVTable(BaseAPOTable):
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
-        key2type = {KEY_IDX: int, **tabledefine.get_key2type()}
+        key2type = {KEY_IDX: int, **tabledefine.get_name2dtype()}
         with open(self.fpath, 'wb') as f:
             append_line(f, head2sent(key2type).encode())
         return self
@@ -262,7 +262,7 @@ class TSVTable(BaseAPOTable):
             else:
                 if is_write_mode(target_file):
                     raise FileAlreadyOpenedForWriteError(f'{self.fpath} is already opened with write permission.')
-                elif open_mode != {'rb'}:
+                elif open_mode != 'rb':
                     raise FileAlreadyOpenedForReadError(f'{self.fpath} is already opened with read permission.')
 
         fts = FileTableAOState() if ori_state is None else ori_state

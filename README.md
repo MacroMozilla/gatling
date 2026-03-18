@@ -19,7 +19,7 @@ Requires Python 3.11+
 | **Storage — Queue** | Thread-safe in-memory queue |
 | **Storage — Dict** | In-memory dictionary with batch ops |
 | **Storage — SFS** | Virtual file system with path routing |
-| **Schema** | Type-safe field definitions — table schemas, constants, config |
+| **Define** | ConstDefine for constants/keys, TableDefine for table schemas |
 | **HTTP** | Async/sync HTTP client (GET/POST/PUT/DELETE) |
 | **File I/O** | JSON, JSONL, Pickle, TOML, text, bytes, zstd compression |
 | **Watch** | Stopwatch, function timing decorator |
@@ -53,44 +53,156 @@ Workers can be **functions** (one-in-one-out) or **generators** (one-in-many-out
 
 ---
 
-## Schema (TableDefine)
+## Define — ConstDefine / TableDefine
 
-`TableDefine` is an extended `Enum`. It can define table schemas, but also work as a typed constants/config manager.
+Two `Enum`-based classes for defining constants. Both inherit from `BaseDefine` and share:
 
-### As table schema
+| Method | Description |
+|---|---|
+| `str(m)` | Returns member name |
+| `"name" in Cls` | Check if member exists by name |
+| `Cls.keys()` | List of all member names |
+| `Cls.items()` | List of `[(name, value), ...]` tuples (use `dict(Cls.items())` for dict) |
+| `Cls.get(name, default)` | Safe lookup, returns `.value` (`default` if not found) |
+| `Cls["name"]` | Access `.value` by name (raises `KeyError` if missing) |
+| `dict(Cls)` | Convert to `{name: value}` dict |
+| `Cls.Name` | Access member (enum object with `.name` and `.value`) |
+| `len(Cls)` | Number of members |
+| `for m in Cls` | Iterate over members |
+
+### ConstDefine — constants and keys
 
 ```python
-from gatling.define.schema import TableDefine, Field
+from enum import auto
+from gatling.define.constdefine import ConstDefine
 
-schema = TableDefine('Users', {
-    'id':    Field(int, primary=True),
-    'name':  Field(str),
-    'score': Field(float),
-})
+class Config(ConstDefine):
+    # direct values — any Python literal
+    Port      = 8080
+    Debug     = False
+    Rate      = 0.001
+    Name      = "my_app"
+    # auto() — member name becomes the string value
+    username  = auto()          # .value = "username"
+    email     = auto()          # .value = "email"
+    # None — single sentinel (only one None allowed per class)
+    Secret    = None
 ```
 
-### As constants / config
+Access:
 
 ```python
-class Config(TableDefine):
-    AppName   = Field(str, default="my_app")
-    Port      = Field(int, default=8080)
-    Debug     = Field(bool, default=False)
-    StartDate = Field(datetime.date, default=datetime.date(2025, 1, 1))
-
-Config.keys()                # ['AppName', 'Port', 'Debug', 'StartDate']
-Config.items()               # {'AppName': 'my_app', 'Port': 8080, ...}
-Config['Port'].default       # 8080
-Config.Port.dtype            # int
-Config.has('Port')           # True
-Config.get('Missing', None)  # None
-
-# Serialize / deserialize
-Config.Port.tostr(8080)              # "8080"
-Config.Port.fmstr("8080")            # 8080
-Config.StartDate.tostr(date.today()) # "2025-03-17"
-Config.StartDate.fmstr("2025-03-17") # datetime.date(2025, 3, 17)
+Config.Port.value               # 8080
+Config.Port.name                # "Port"
+str(Config.Port)                # "Port"
+Config.username.value           # "username"
+Config.Secret.value             # None
 ```
+
+Lookup:
+
+```python
+"Port" in Config                # True
+"nope" in Config                # False
+Config.get("Port")              # 8080
+Config.get("nope")              # None
+Config.get("nope", "fallback") # "fallback"
+Config["Port"]                  # 8080
+dict(Config)                    # {'Port': 8080, 'Debug': False, ..., 'Secret': None}
+```
+
+Collection:
+
+```python
+Config.keys()                   # ['Port', 'Debug', 'Rate', 'Name', 'username', 'email', 'Secret']
+Config.items()                  # [('Port', 8080), ('Debug', False), ..., ('Secret', None)]
+dict(Config.items())            # {'Port': 8080, 'Debug': False, ..., 'Secret': None}
+len(Config)                     # 7
+[m.name for m in Config]        # ['Port', 'Debug', 'Rate', 'Name', 'username', 'email', 'Secret']
+```
+
+### TableDefine — typed table schema
+
+All members must be `Field` (non-Field values raise `TypeError`).
+
+```python
+import datetime
+from gatling.define.tabledefine import TableDefine, Field
+
+class Users(TableDefine):
+    id        = Field(int, primary=True)
+    name      = Field(str, nullable=False)
+    score     = Field(float, default=0.0)
+    active    = Field(bool, default=True)
+    birthday  = Field(datetime.date)
+    created   = Field(datetime.datetime)
+```
+
+Field attributes (via `.value`):
+
+```python
+Users.name.value.dtype          # str
+Users.name.value.default        # ""
+Users.name.value.primary        # False
+Users.name.value.nullable       # False
+Users.score.value.default       # 0.0
+Users.id.value.primary          # True
+```
+
+Serialize / deserialize:
+
+```python
+Users.score.value.tostr(9.5)                            # "9.5"
+Users.score.value.fmstr("9.5")                          # 9.5
+Users.active.value.tostr(True)                           # "1"
+Users.active.value.fmstr("0")                            # False
+Users.birthday.value.tostr(datetime.date(2025, 6, 15))  # "2025-06-15"
+Users.birthday.value.fmstr("2025-06-15")                 # datetime.date(2025, 6, 15)
+```
+
+Lookup and collection (same as ConstDefine):
+
+```python
+"name" in Users                 # True
+Users.get("name")               # Field(dtype=str, ...)  (returns Field directly)
+Users.keys()                    # ['id', 'name', 'score', 'active', 'birthday', 'created']
+Users.items()                   # [('id', Field(...)), ('name', Field(...)), ...]
+Users.get_name2dtype()          # {'id': int, 'name': str, 'score': float, ...}
+```
+
+SQL generation (PostgreSQL dialect):
+
+```python
+from sqlalchemy import BigInteger, String, Float
+from sqlalchemy.dialects.postgresql import TIMESTAMP, JSONB
+
+class Posts(TableDefine):
+    id        = Field(BigInteger, primary=True, autoincrement=True, comment="primary key")
+    title     = Field(String(256), nullable=False)
+    score     = Field(Float, default=0.0, index=True)
+    tags      = Field(JSONB)
+    created   = Field(TIMESTAMP(timezone=True), server_default="now()")
+
+Posts.get_sql_create()          # CREATE TABLE IF NOT EXISTS "Posts" (id BIGSERIAL ... )
+Posts.get_sql_drop()            # DROP TABLE IF EXISTS "Posts"
+```
+
+Field options:
+
+| Option | Type | Description |
+|---|---|---|
+| `dtype` | type | Python type (`int`, `str`, ...) or SQLAlchemy type (`BigInteger`, `String(64)`, ...) |
+| `default` | any | Default value (auto-inferred from dtype if omitted) |
+| `primary` | bool | Primary key |
+| `nullable` | bool | Allow NULL (default `True`) |
+| `unique` | bool | Unique constraint |
+| `index` | bool | Create index |
+| `autoincrement` | bool | Auto-increment |
+| `server_default` | str | SQL server-side default expression (e.g. `"now()"`) |
+| `foreign_key` | str | Foreign key reference (e.g. `"users.id"`) |
+| `comment` | str | Column comment |
+| `tostr` | callable | Custom serializer (auto-inferred from dtype if omitted) |
+| `fmstr` | callable | Custom deserializer (auto-inferred from dtype if omitted) |
 
 ---
 
