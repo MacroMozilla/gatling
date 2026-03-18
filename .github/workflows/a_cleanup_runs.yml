@@ -3,24 +3,18 @@ name: Cleanup Runs ✋
 on:
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
     steps:
       - name: Delete ALL workflow runs in this repository
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 0
-          keep_minimum_runs: 0
-          delete_workflow_pattern: ""
-          delete_workflow_by_state_pattern: "ALL"
-          delete_run_by_conclusion_pattern: "ALL"
-          dry_run: false
+        env:
+          GH_TOKEN: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          echo "Deleting all workflow runs for $REPO..."
+          gh run list --repo "$REPO" --limit 200 --json databaseId -q '.[].databaseId' | \
+            xargs -I {} gh run delete {} --repo "$REPO" 2>/dev/null || true
+          echo "Done."

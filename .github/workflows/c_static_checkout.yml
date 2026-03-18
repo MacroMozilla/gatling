@@ -25,49 +25,41 @@ permissions:
   contents: read
   security-events: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
     steps:
-      - name: Delete ALL workflow runs in this repository
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 0                # Default is 30 days; must be 0 to delete ALL runs
-          keep_minimum_runs: 0          # Do not keep any runs
-          delete_workflow_pattern: "${{ github.workflow }}"
-          delete_workflow_by_state_pattern: "ALL"
-          delete_run_by_conclusion_pattern: "ALL"
-          dry_run: false
-
+      - name: Delete workflow runs for this workflow
+        env:
+          GH_TOKEN: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          WORKFLOW="${{ github.workflow }}"
+          gh run list --repo "$REPO" --workflow "$WORKFLOW" --limit 200 --json databaseId -q '.[].databaseId' | \
+            xargs -I {} gh run delete {} --repo "$REPO" 2>/dev/null || true
 
   static-checkout:
     runs-on: ubuntu-latest
     needs: [ cleanup ]
     steps:
       - name: Static Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check for non-English letters
         run: |
-          echo "🔍 Scanning for non-English letters..."
-          
+          echo "Scanning for non-English letters..."
+
           TARGET_DIRS="gatling tests .github pyproject.toml"
-          
+
           # Whitelist: files or directories to skip
           WHITELIST=(
              "tests/storage/g_dctn/test_memory_dctn_str_0_objs.py"
              "tests/utility/test_io_fctns_orjson.py"
              "tests/utility/test_io_fctns_pickle.py"
           )
-          
+
           # Build filter pattern
           if [ ${#WHITELIST[@]} -gt 0 ]; then
             FILTER_PATTERN=$(IFS='|'; echo "${WHITELIST[*]}")
@@ -75,36 +67,36 @@ jobs:
           else
             FILTER_CMD="cat"
           fi
-          
+
           # Detect non-English letters (exclude symbols, punctuation, numbers, etc.)
           non_english_files=$(
             grep -rInP '[^\x00-\x7F]' $TARGET_DIRS 2>/dev/null | \
             grep -P '[^\x00-\x7F\p{S}\p{P}\p{N}\p{Z}\p{M}\p{C}]' | \
             eval "$FILTER_CMD" || true
           )
-          
+
           if [ -n "$non_english_files" ]; then
-            echo "❌ Found non-English letters:"
+            echo "Found non-English letters:"
             echo ""
-          
+
             # Process each line, extract and highlight problematic characters
             echo "$non_english_files" | while IFS= read -r line; do
               # Extract file:line part
               file_info=$(echo "$line" | cut -d: -f1-2)
               content=$(echo "$line" | cut -d: -f3-)
-          
+
               # Extract all non-English letter characters
               bad_chars=$(echo "$content" | grep -oP '[^\x00-\x7F\p{S}\p{P}\p{N}\p{Z}\p{M}\p{C}]' | sort -u | tr -d '\n')
-          
+
               echo "$file_info: [ $bad_chars ]"
               echo "    $content"
               echo ""
             done
-          
+
             echo "Please remove or replace non-English letters before committing."
             exit 1
           else
-            echo "✅ All files contain only English letters."
+            echo "All files contain only English letters."
           fi
 
       # -------------------------
@@ -112,7 +104,6 @@ jobs:
       # -------------------------
       - name: Ruff Lint
         uses: chartboost/ruff-action@v1
-
 
       # -------------------------
       # 3. CodeQL Security Scan

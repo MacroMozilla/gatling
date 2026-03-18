@@ -3,27 +3,20 @@ name: Publish To PYPI ✋
 on:
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
     steps:
-      - name: Delete ALL workflow runs in this repository
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 0
-          keep_minimum_runs: 0
-          delete_workflow_pattern: "${{ github.workflow }}"
-          delete_workflow_by_state_pattern: "ALL"
-          delete_run_by_conclusion_pattern: "ALL"
-          dry_run: false
+      - name: Delete workflow runs for this workflow
+        env:
+          GH_TOKEN: ${{ secrets.DELETE_ACTION_RUN_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          WORKFLOW="${{ github.workflow }}"
+          gh run list --repo "$REPO" --workflow "$WORKFLOW" --limit 200 --json databaseId -q '.[].databaseId' | \
+            xargs -I {} gh run delete {} --repo "$REPO" 2>/dev/null || true
 
   publish:
     runs-on: ubuntu-latest
@@ -32,10 +25,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11.9"
 
