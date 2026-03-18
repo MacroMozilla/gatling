@@ -6,7 +6,7 @@ from gatling.define.constdefine import ConstDefine
 from gatling.define.tabledefine import TableDefine, Field
 
 from sqlalchemy import Integer, SmallInteger, BigInteger, Float, Numeric, Boolean
-from sqlalchemy import String, Text, LargeBinary, Date, Time, DateTime, Interval
+from sqlalchemy import String, Text, Date, Time, DateTime, Interval
 from sqlalchemy.dialects.postgresql import JSONB, JSON, UUID, BYTEA, INET, DOUBLE_PRECISION
 
 
