@@ -2,11 +2,11 @@ import datetime
 import os
 from pathlib import Path
 
-from gatling.define.schema import SchemaBase, Field
+from gatling.define.schema import TableDefine, Field
 from gatling.utility.xprint import xprint_rows
 
 
-class ConstSchema(SchemaBase):
+class ConstSchema(TableDefine):
     name       = Field(str)
     age        = Field(int)
     score      = Field(float)

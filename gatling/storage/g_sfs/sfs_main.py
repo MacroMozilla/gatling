@@ -29,7 +29,7 @@ class SuperFileSystem:
 
         print(f"Create SFS-database at {self.dpath_root_dbname}")
 
-    def delete(self, force: bool = False) -> bool:
+    def drop(self, force: bool = False) -> bool:
         if not force:
             confirm = input(f"Are you sure you want to delete all data at {self.dpath_root_dbname}? (confirm/no): ")
             if confirm.lower().strip() != 'confirm':
@@ -101,5 +101,5 @@ if __name__ == "__main__":
     sfsb.mkdir('test2')
     sfsb.mkdir('test3')
 
-    sfst.delete()
-    sfsb.delete()
+    sfst.drop()
+    sfsb.drop()

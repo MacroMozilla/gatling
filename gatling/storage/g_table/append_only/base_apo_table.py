@@ -7,6 +7,10 @@ class BaseAPOTable():
         super().__init__()
 
     @abstractmethod
+    def create(self, tabledefine):
+        pass
+
+    @abstractmethod
     def append(self, row):
         pass
 
@@ -15,11 +19,11 @@ class BaseAPOTable():
         pass
 
     @abstractmethod
-    def delete(self):
+    def drop(self):
         pass
 
     @abstractmethod
-    def clear(self):
+    def truncate(self):
         pass
 
     @abstractmethod

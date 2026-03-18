@@ -34,7 +34,7 @@ if __name__ == '__main__':
     save_pickle(rows,fpath_temp_pkl)
     print(f"save_pickle {w.see_timedelta()}")
 
-    ft = TSVTable(fpath_temp_tsv).initialize(schema=ConstTestSchema)
+    ft = TSVTable(fpath_temp_tsv).create(tabledefine=ConstTestSchema)
     ft.extend(rows)
     print(f"FileTableAO.extend {w.see_timedelta()}")
 

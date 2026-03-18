@@ -4,7 +4,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Optional, IO, Any, BinaryIO, Literal
 
-from gatling.define.schema import SchemaBase, Field
+from gatling.define.schema import TableDefine, Field
 
 from gatling.storage.g_table.append_only.base_apo_table import BaseAPOTable
 from gatling.storage.g_table.append_only.help_tools.file_tools import readline_forward, append_line, extend_lines, readline_backward, goto_tail, get_pos, set_pos, goto_head, truncate, popout
@@ -18,7 +18,7 @@ def is_write_mode(file: IO) -> bool:
     return bool(set(file.mode) & {"w", "a", "+", "x"})
 
 
-class KeyType(SchemaBase):
+class KeyType(TableDefine):
     str      = Field(str)
     int      = Field(int)
     float    = Field(float)
@@ -245,11 +245,11 @@ class TSVTable(BaseAPOTable):
             else:
                 return sent2row(last_sent, key2type)
 
-    def initialize(self, schema) -> 'TSVTable':
+    def create(self, tabledefine) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
-        key2type = {KEY_IDX: int, **schema.get_key2type()}
+        key2type = {KEY_IDX: int, **tabledefine.get_key2type()}
         with open(self.fpath, 'wb') as f:
             append_line(f, head2sent(key2type).encode())
         return self
@@ -329,14 +329,14 @@ class TSVTable(BaseAPOTable):
     def exists(self) -> bool:
         return os.path.exists(self.fpath)
 
-    def delete(self) -> 'TSVTable':
+    def drop(self) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
         remove_file(self.fpath)
         return self
 
-    def clear(self) -> 'TSVTable':
+    def truncate(self) -> 'TSVTable':
         target_file = self.state.file
         if target_file is not None:
             raise FileAlreadyOpenedError(f'{self.fpath} is already opened with read or write permission.')
@@ -541,7 +541,7 @@ if __name__ == '__main__':
     from a_const_debug import fpath_temp_tsv, ConstSchema, row1, row2, rows
 
     ft = TSVTable(fpath_temp_tsv)
-    ft.delete()
+    ft.drop()
 
     if False:
         printi(ft.get_key2type())
@@ -549,7 +549,7 @@ if __name__ == '__main__':
         printi(ft.get_last_row())
         printi('#' * 100)
 
-    ft.initialize(schema=ConstSchema)
+    ft.create(tabledefine=ConstSchema)
 
     if False:
         printi(ft.get_key2type())
@@ -609,4 +609,4 @@ if __name__ == '__main__':
 
     #
     # x = input('press enter to exit')
-    # ft.clear()
+    # ft.truncate()

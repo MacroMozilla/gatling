@@ -69,7 +69,7 @@ class TestFileTableAccess(SubTestCase):
         self.test_fname = os.path.join(self.temp_dir.name, "test_table.tsv")
         print(f"Test file path: {self.test_fname}")
 
-        self.ft = TSVTable(self.test_fname).initialize(schema=ConstTestSchema)
+        self.ft = TSVTable(self.test_fname).create(tabledefine=ConstTestSchema)
         self.rows = []
 
         self.const_local_error = []

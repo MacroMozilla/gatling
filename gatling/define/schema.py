@@ -172,9 +172,9 @@ class Field:
         return f"Field(dtype={self.dtype.__name__}, default={self.default!r}, primary={self.primary})"
 
 
-# ===================== SchemaBase =====================
+# ===================== TableDefine =====================
 
-class SchemaBase(Enum):
+class TableDefine(Enum):
 
     @property
     def default(self) -> Any:
@@ -257,7 +257,7 @@ class SchemaBase(Enum):
 if __name__ == "__main__":
 
     # --- py mode: all Python types ---
-    class ConstKey(SchemaBase):
+    class ConstKey(TableDefine):
         AppName   = Field(str, default="my_app")
         Port      = Field(int, default=8080)
         Lr        = Field(float, default=0.001)
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     print()
 
     # --- sql mode: common PostgreSQL types ---
-    class TempTable(SchemaBase):
+    class TempTable(TableDefine):
         # Numeric
         Id        = Field(BigInteger, primary=True, autoincrement=True, comment="primary key")
         Age       = Field(SmallInteger, default=0)

@@ -90,14 +90,14 @@ class TestFileTableBase(SubTestCase):
 
     def test_init_x_ctxt_init(self):
         with self.subTestCase():
-            self.ft.initialize(schema=ConstTestSchema)
+            self.ft.create(tabledefine=ConstTestSchema)
             with self.ft:
                 with self.assertRaises(FileAlreadyOpenedError):
-                    self.ft.initialize(schema=ConstTestSchema)
+                    self.ft.create(tabledefine=ConstTestSchema)
 
     def test_init_x_ctxt_build_state(self):
         with self.subTestCase():
-            self.ft.initialize(schema=ConstTestSchema)
+            self.ft.create(tabledefine=ConstTestSchema)
             with self.ft:
                 with self.assertRaises(FileAlreadyOpenedForWriteError):
                     with self.ft:
@@ -105,7 +105,7 @@ class TestFileTableBase(SubTestCase):
 
     def test_init_x_clean_state(self):
         with self.subTestCase():
-            self.ft.initialize(schema=ConstTestSchema)
+            self.ft.create(tabledefine=ConstTestSchema)
 
             with self.assertRaises(FileNotOpenError):
                 self.ft._clean_state(self.ft.state)
@@ -114,7 +114,7 @@ class TestFileTableBase(SubTestCase):
 
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 _ = prerun()
                 with self.ft:
                     with self.assertRaises(FileAlreadyOpenedForWriteError):
@@ -123,7 +123,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_getfirstrow(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     with self.assertRaises(FileAlreadyOpenedForWriteError):
@@ -137,7 +137,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_getlastrow(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     with self.assertRaises(FileAlreadyOpenedForWriteError):
@@ -152,7 +152,7 @@ class TestFileTableBase(SubTestCase):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
                 self.assertFalse(self.ft.exists())
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 self.assertTrue(self.ft.exists())
                 _ = prerun()
                 with self.ft:
@@ -163,14 +163,14 @@ class TestFileTableBase(SubTestCase):
             with self.subTestCase(prerun=prerun.__name__):
                 self.assertFalse(self.ft.exists())
 
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 self.assertTrue(self.ft.exists())
                 _ = prerun()
                 self.assertTrue(self.ft.exists())
 
                 with self.ft:
                     with self.assertRaises(FileAlreadyOpenedError):
-                        self.ft.delete()
+                        self.ft.drop()
                 # check not deleted
                 self.assertTrue(self.ft.exists())
 
@@ -180,14 +180,14 @@ class TestFileTableBase(SubTestCase):
 
                 self.assertFalse(self.ft.exists())
 
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 self.assertTrue(self.ft.exists())
                 rows = prerun()
                 self.assertTrue(self.ft.exists())
 
                 with self.ft:
                     with self.assertRaises(FileAlreadyOpenedError):
-                        self.ft.clear()
+                        self.ft.truncate()
 
                 # check not cleared
                 self.assertTrue(self.ft.exists())
@@ -212,7 +212,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_append_extend(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 with self.ft:
                     rows = prerun()
                 self.assertEqual(self.ft.rows(), rows)
@@ -220,7 +220,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_keys(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 _ = prerun()
                 with self.ft:
                     self.assertEqual(self.ft.keys(), const_keys_extra)
@@ -228,7 +228,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_len(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     self.assertEqual(len(self.ft), len(rows))
@@ -236,7 +236,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_getitem(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     self.assertEqual(self.ft[:], rows)
@@ -244,7 +244,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_rows(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     self.assertEqual(self.ft.rows(), rows)
@@ -252,7 +252,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_cols(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     self.assertEqual(self.ft.cols(), rows2cols(rows, const_keys))
@@ -260,7 +260,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_pop(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     res = self.ft.pop()
@@ -275,7 +275,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_shrink1(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
 
                 with self.ft:
@@ -293,7 +293,7 @@ class TestFileTableBase(SubTestCase):
     def test_prerun_x_shrink2(self):
         for prerun in self.preruns:
             with self.subTestCase(prerun=prerun.__name__):
-                self.ft.initialize(schema=ConstTestSchema)
+                self.ft.create(tabledefine=ConstTestSchema)
                 rows = prerun()
                 with self.ft:
                     res = self.ft.shrink(2)
