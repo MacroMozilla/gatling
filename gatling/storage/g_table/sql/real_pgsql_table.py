@@ -12,11 +12,20 @@ from gatling.storage.g_table.sql.base_sql_table import BaseSQLTable, build_where
 from gatling.storage.g_table.sql.a_pgsql_base import compile_stmt, exist_table, _PG_DIALECT
 
 
+def _parse_table_name(table_name: str) -> tuple[str | None, str]:
+    """Parse 'schema.table' into (schema, table). Plain 'table' returns (None, table)."""
+    if '.' in table_name:
+        schema, table = table_name.split('.', 1)
+        return schema, table
+    return None, table_name
+
+
 class PGSQLTable(BaseSQLTable):
 
     def __init__(self, table_name: str, pool: ConnectionPool):
         super().__init__()
         self.table_name = table_name
+        self._schema, self._bare_table = _parse_table_name(table_name)
         self.pool = pool
         self._conn = None
         self.tabledefine = None
@@ -32,24 +41,29 @@ class PGSQLTable(BaseSQLTable):
         self._all_keys = tabledefine.keys()
         self._primary_keys = [m.name for m in tabledefine if m.value.primary]
         src = tabledefine.get_sql_table()
-        self._table = src.to_metadata(MetaData(), name=self.table_name)
+        meta = MetaData(schema=self._schema) if self._schema else MetaData()
+        self._table = src.to_metadata(meta, name=self._bare_table)
         self._json_cols = {c.name for c in self._table.columns if isinstance(c.type, (JSONB, JSON))}
+        if self._schema:
+            self._exec(f'CREATE SCHEMA IF NOT EXISTS "{self._schema}"')
         sql = str(CreateTable(self._table, if_not_exists=True).compile(dialect=_PG_DIALECT))
         self._exec(sql)
         return self
 
     def exists(self) -> bool:
-        return exist_table(self.pool, self.table_name)
+        return exist_table(self.pool, self._bare_table, schema=self._schema)
 
     def truncate(self) -> 'PGSQLTable':
-        self._exec(f'TRUNCATE TABLE "{self.table_name}"')
+        qualified = f'"{self._schema}"."{self._bare_table}"' if self._schema else f'"{self._bare_table}"'
+        self._exec(f'TRUNCATE TABLE {qualified}')
         return self
 
     def drop(self) -> 'PGSQLTable':
         if self._table is not None:
             sql = str(DropTable(self._table, if_exists=True).compile(dialect=_PG_DIALECT))
         else:
-            sql = f'DROP TABLE IF EXISTS "{self.table_name}"'
+            qualified = f'"{self._schema}"."{self._bare_table}"' if self._schema else f'"{self._bare_table}"'
+            sql = f'DROP TABLE IF EXISTS {qualified}'
         self._exec(sql)
         return self
 

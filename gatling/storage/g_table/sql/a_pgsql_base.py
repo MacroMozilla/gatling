@@ -22,12 +22,12 @@ def compile_stmt(stmt) -> tuple[str, dict]:
 
 # ===================== Table Ops =====================
 
-def exist_table(pool: ConnectionPool, table_name: str) -> bool:
+def exist_table(pool: ConnectionPool, table_name: str, schema: str = None) -> bool:
     with pool.connection() as conn:
         cur = conn.execute(
             "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
-            "WHERE table_schema = 'public' AND table_name = %s)",
-            (table_name,),
+            "WHERE table_schema = %s AND table_name = %s)",
+            (schema or 'public', table_name),
         )
         row = cur.fetchone()
         return row[0]

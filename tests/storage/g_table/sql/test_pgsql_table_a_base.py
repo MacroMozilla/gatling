@@ -394,5 +394,155 @@ class TestPGSQLTableInsertSQLMode(unittest.TestCase):
                 self.assertEqual(a, e, msg=f"key={key}")
 
 
+@skip_pgsql
+class TestPGSQLTableSchema(unittest.TestCase):
+    """Tests for schema-qualified table names (e.g. 'myschema.mytable')."""
+
+    TEST_SCHEMA = "test_gatling_schema"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pool = create_pool(CONNINFO, max_size=5)
+
+    @classmethod
+    def tearDownClass(cls):
+        # clean up the test schema
+        with cls.pool.connection() as conn:
+            conn.execute(f'DROP SCHEMA IF EXISTS "{cls.TEST_SCHEMA}" CASCADE')
+            conn.commit()
+        cls.pool.close()
+
+    def setUp(self):
+        reset_counter()
+        self.table_name = f"{self.TEST_SCHEMA}.test_schema_table"
+        self.ft = PGSQLTable(self.table_name, self.pool)
+        self.ft.drop()
+
+    def tearDown(self):
+        self.ft.drop()
+
+    # ===================== Parsing =====================
+
+    def test_parse_schema_qualified(self):
+        ft = PGSQLTable("myschema.mytable", self.pool)
+        self.assertEqual(ft._schema, "myschema")
+        self.assertEqual(ft._bare_table, "mytable")
+
+    def test_parse_plain_name(self):
+        ft = PGSQLTable("mytable", self.pool)
+        self.assertIsNone(ft._schema)
+        self.assertEqual(ft._bare_table, "mytable")
+
+    # ===================== Lifecycle =====================
+
+    def test_exists_before_create(self):
+        self.assertFalse(self.ft.exists())
+
+    def test_create_and_exists(self):
+        self.ft.create(MinimalSchema)
+        self.assertTrue(self.ft.exists())
+
+    def test_drop(self):
+        self.ft.create(MinimalSchema)
+        self.assertTrue(self.ft.exists())
+        self.ft.drop()
+        self.assertFalse(self.ft.exists())
+
+    def test_drop_nonexistent(self):
+        self.ft.drop()
+        self.assertFalse(self.ft.exists())
+
+    def test_truncate(self):
+        self.ft.create(MinimalSchema)
+        self.ft.insert(rand_row_minimal())
+        self.assertEqual(self.ft.count(), 1)
+        self.ft.truncate()
+        self.assertEqual(self.ft.count(), 0)
+        self.assertTrue(self.ft.exists())
+
+    def test_keys(self):
+        self.ft.create(MinimalSchema)
+        self.assertEqual(self.ft.keys(), ['id', 'name'])
+
+    # ===================== CRUD =====================
+
+    def test_insert_fetch(self):
+        self.ft.create(MinimalSchema)
+        row = rand_row_minimal()
+        self.ft.insert(row)
+        fetched = self.ft.fetch()
+        self.assertEqual(len(fetched), 1)
+        self.assertEqual(fetched[0], row)
+
+    def test_insert_multi(self):
+        self.ft.create(MinimalSchema)
+        rows = [rand_row_minimal() for _ in range(5)]
+        self.ft.insert(*rows)
+        fetched = self.ft.fetch(order_by={'id': False})
+        self.assertEqual(len(fetched), 5)
+        for expected, actual in zip(rows, fetched):
+            self.assertEqual(actual, expected)
+
+    def test_count(self):
+        self.ft.create(MinimalSchema)
+        self.assertEqual(self.ft.count(), 0)
+        self.ft.insert(rand_row_minimal())
+        self.assertEqual(self.ft.count(), 1)
+
+    def test_update(self):
+        self.ft.create(MinimalSchema)
+        row = rand_row_minimal()
+        self.ft.insert(row)
+        self.ft.update({'name': 'updated'}, {'id': row['id']})
+        fetched = self.ft.fetch()
+        self.assertEqual(fetched[0]['name'], 'updated')
+
+    def test_delete(self):
+        self.ft.create(MinimalSchema)
+        row = rand_row_minimal()
+        self.ft.insert(row)
+        self.ft.delete({'id': row['id']})
+        self.assertEqual(self.ft.count(), 0)
+
+    # ===================== Context Manager =====================
+
+    def test_ctxt_insert_commit(self):
+        self.ft.create(MinimalSchema)
+        with self.ft:
+            self.ft.insert(rand_row_minimal())
+        self.assertEqual(self.ft.count(), 1)
+
+    def test_ctxt_insert_rollback(self):
+        self.ft.create(MinimalSchema)
+        try:
+            with self.ft:
+                self.ft.insert(rand_row_minimal())
+                raise RuntimeError("force rollback")
+        except RuntimeError:
+            pass
+        self.assertEqual(self.ft.count(), 0)
+
+    # ===================== Isolation =====================
+
+    def test_schema_does_not_clash_with_public(self):
+        """Table in custom schema does not conflict with same-named table in public."""
+        public_ft = PGSQLTable("test_schema_table", self.pool)
+        public_ft.drop()
+        try:
+            public_ft.create(MinimalSchema)
+            self.ft.create(MinimalSchema)
+
+            public_ft.insert({'id': 1, 'name': 'public'})
+            self.ft.insert({'id': 1, 'name': 'schema'})
+
+            self.assertEqual(public_ft.fetch()[0]['name'], 'public')
+            self.assertEqual(self.ft.fetch()[0]['name'], 'schema')
+        finally:
+            public_ft.drop()
+
+    def test_repr(self):
+        self.assertIn(self.table_name, repr(self.ft))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
