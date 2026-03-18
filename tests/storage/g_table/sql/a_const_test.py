@@ -1,5 +1,4 @@
 import datetime
-import json
 import uuid
 from collections import defaultdict
 
@@ -13,7 +12,6 @@ from sqlalchemy.dialects.postgresql import (
 )
 
 from gatling.define.schema import TableDefine, Field
-from gatling.storage.g_table.sql.a_pgsql_base import create_pool
 from gatling.utility.rand_tools import (
     rand_bool, rand_uint8, rand_int32, rand_float_01,
     rand_name_en, rand_url, rand_ip, rand_username, rand_password,

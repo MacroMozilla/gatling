@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    MetaData, Table,
+    MetaData,
     select, update as sa_update, delete as sa_delete,
     func,
 )

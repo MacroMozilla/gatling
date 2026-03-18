@@ -1,9 +1,10 @@
 import unittest
 
 from gatling.storage.g_table.sql.real_pgsql_table import PGSQLTable
+from gatling.storage.g_table.sql.a_pgsql_base import create_pool
 from storage.g_table.sql.a_const_test import (
     CONNINFO, MinimalSchema,
-    rand_row_minimal, reset_counter, create_pool, skip_pgsql,
+    rand_row_minimal, reset_counter, skip_pgsql,
 )
 
 
