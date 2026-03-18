@@ -3,6 +3,8 @@ name: Publish To PYPI ✋
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   cleanup:
@@ -10,8 +12,6 @@ jobs:
     permissions:
       actions: write
       contents: read
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Delete ALL workflow runs in this repository
         uses: Mattraks/delete-workflow-runs@v2
