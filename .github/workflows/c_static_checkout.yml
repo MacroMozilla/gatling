@@ -9,7 +9,6 @@ on:
       - '.github/**'
       - 'gatling/**'
       - 'tests/**'
-      - 'pyproject.toml'
       - 'requirements.txt'
 
   pull_request:
@@ -19,7 +18,6 @@ on:
       - '.github/**'
       - 'gatling/**'
       - 'tests/**'
-      - 'pyproject.toml'
       - 'requirements.txt'
 
 permissions:
