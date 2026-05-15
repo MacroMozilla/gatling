@@ -6,7 +6,7 @@ A unified I/O management toolkit for Python. Orchestrate processes, threads, and
 pip install gatling
 ```
 
-Requires Python 3.11+
+Requires Python 3.12+
 
 ---
 

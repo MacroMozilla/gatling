@@ -8,12 +8,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gatling"
 dynamic = ["dependencies"]
-version = "0.3.0.25.11"
+version = "0.3.0.25.12"
 
 description = "A unified I/O management toolkit supporting threads, coroutines, files, databases, and data formats"
 
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 authors = [
     { name = "MacroMozilla", email = "honyzeng7@gmail.com" }
