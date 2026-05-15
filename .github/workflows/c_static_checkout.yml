@@ -58,6 +58,8 @@ jobs:
              "tests/storage/g_dctn/test_memory_dctn_str_0_objs.py"
              "tests/utility/test_io_fctns_orjson.py"
              "tests/utility/test_io_fctns_pickle.py"
+             "tests/utility/test_io_fctns_text_bytes.py"
+             "tests/utility/test_io_fctns_ini_toml.py"
           )
 
           # Build filter pattern
