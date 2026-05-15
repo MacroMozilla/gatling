@@ -1,3 +1,4 @@
+import configparser
 import os
 import tomllib
 import traceback
@@ -138,6 +139,17 @@ def read_bytes(filename: str, mode: str = 'rb') -> bytes:
         raise FileNotFoundError(f"File not found: {filename}")
     except Exception as e:
         raise RuntimeError(f"Error reading file: {filename}") from e
+
+
+def read_ini(file_path: str) -> dict:
+    try:
+        parser = configparser.ConfigParser()
+        parser.read(file_path, encoding='utf-8')
+        return {section: dict(parser[section]) for section in parser.sections()}
+    except FileNotFoundError:
+        raise FileNotFoundError(f"INI file not found: {file_path}")
+    except Exception as e:
+        raise RuntimeError(f"Error reading INI file: {file_path}") from e
 
 
 def read_toml(file_path: str) -> dict:
